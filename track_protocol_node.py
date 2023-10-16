@@ -1,7 +1,7 @@
 import socket
 from track_protocol_mensage import *
 
-def Node(name):
+def Node(node_name):
     #dicionario das cenas que tem
     dict_files={}
 
@@ -16,8 +16,8 @@ def Node(name):
     client_socket.connect((host, port))
 
     # Mensagens para o servidor
-    startConnection(client_socket,name)
-    filesDictNode(client_socket,name,dict_files)
+    startConnection(client_socket,node_name)
+    filesDictNode(client_socket,node_name,dict_files)
 
     # Recebe a resposta do servidor
     data = client_socket.recv(1024)
