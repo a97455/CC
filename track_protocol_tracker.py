@@ -1,9 +1,9 @@
 import socket
 import json
 
-def cria_ligacao():
-    #Guarda informação dos nodos
-    list_nodes = {}
+def Tracker():
+    # Guarda informação dos nodos e seus respetivos ficheiros
+    dict_nodes_files = {}
 
     # Configuração do servidor
     host = '127.0.0.1'
@@ -32,11 +32,11 @@ def cria_ligacao():
 
         mensage=data.decode().split("|")
         if (mensage[0]=="startConnection"):
-            if mensage[1] not in list_nodes:
-                list_nodes[mensage[1]]={}  
+            if mensage[1] not in dict_nodes_files:
+                dict_nodes_files[mensage[1]]={}  
         elif (mensage[0]=="filesDictNode"):
             data2 = client_socket.recv(1024)
-            list_nodes[mensage[1]]=json.loads(data2.decode())  
+            dict_nodes_files[mensage[1]]=json.loads(data2.decode())  
 
         # Envia uma resposta de volta para o cliente
         response = mensage[1]
@@ -48,13 +48,4 @@ def cria_ligacao():
         # Fecha o socket do servidor
         server_socket.close()
 
-cria_ligacao()
-
-
-
-
-
-
-
-
-
+Tracker()

@@ -1,9 +1,9 @@
 import socket
-from tracker_protocol_mensage import *
+from track_protocol_mensage import *
 
-def cria_ligacao(name):
+def Node(name):
     #dicionario das cenas que tem
-    dic_files={"adshbsah":[1,2]}
+    dict_files={}
 
     # Configuração do cliente
     host = '127.0.0.1'
@@ -15,8 +15,9 @@ def cria_ligacao(name):
     # Conecta ao servidor
     client_socket.connect((host, port))
 
+    # Mensagens para o servidor
     startConnection(client_socket,name)
-    filesDictNode(client_socket,name,dic_files)
+    filesDictNode(client_socket,name,dict_files)
 
     # Recebe a resposta do servidor
     data = client_socket.recv(1024)
@@ -25,5 +26,4 @@ def cria_ligacao(name):
     # Fecha a conexão com o servidor
     client_socket.close()
 
-cria_ligacao("node1")
-    
+Node("node1")
