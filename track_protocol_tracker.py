@@ -28,7 +28,6 @@ def Tracker():
 
         # Lê dados do cliente
         header=client_socket.recv(39).decode().split("|")
-        print(header)
 
         data_length = int.from_bytes(eval(header[1].encode()),byteorder='big')
         data = client_socket.recv(data_length)
