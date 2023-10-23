@@ -17,7 +17,7 @@ def Node(node_name):
 
     # Mensagens para o servidor
     startConnection(client_socket,node_name)
-    #filesDictNode(client_socket,node_name,dict_files)
+    filesDictNode(client_socket,node_name,dict_files)
 
     # Recebe a resposta do servidor
     data = client_socket.recv(1024)

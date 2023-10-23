@@ -27,12 +27,12 @@ def Tracker():
         print(f"Conexão de {addr[0]}:{addr[1]} estabelecida.")
 
         # Lê dados do cliente
-        header=client_socket.recv(8).decode().split("|")
+        header=client_socket.recv(39).decode().split("|")
         print(header)
 
-        data_length = int.from_bytes(bytes.fromhex(header[1]),byteorder='big')
+        data_length = int.from_bytes(eval(header[1].encode()),byteorder='big')
         data = client_socket.recv(data_length)
-
+        
         if not data:
             break
 
@@ -42,12 +42,12 @@ def Tracker():
                 dict_nodes_files[message[0]]={}  
                 print(dict_nodes_files) # test
         elif (header[0]=="001"):
-            if message[0] not in dict_nodes_files:
+            if message[0] in dict_nodes_files:
                 dict_nodes_files[message[0]]=json.loads(message[1])
                 print(dict_nodes_files) # teste
 
         # Envia uma resposta de volta para o cliente
-        response = message[1]
+        response = message[0]
         client_socket.send(response.encode())
 
     # Fecha a conexão com o cliente
