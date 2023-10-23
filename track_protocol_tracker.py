@@ -1,5 +1,6 @@
 import socket
 import json
+import sys
 
 def Tracker():
     # Guarda informação dos nodos e seus respetivos ficheiros
@@ -26,7 +27,9 @@ def Tracker():
         print(f"Conexão de {addr[0]}:{addr[1]} estabelecida.")
 
         # Lê dados do cliente
-        data = client_socket.recv(1024)
+        lenght=int(client_socket.recv())
+
+        data = client_socket.recv(lenght)
         if not data:
             break
 
@@ -35,17 +38,18 @@ def Tracker():
             if mensage[1] not in dict_nodes_files:
                 dict_nodes_files[mensage[1]]={}  
         elif (mensage[0]=="filesDictNode"):
-            data2 = client_socket.recv(1024)
-            dict_nodes_files[mensage[1]]=json.loads(data2.decode())  
+            if mensage[1] not in dict_nodes_files:
+                dict_nodes_files[mensage[1]]=json.loads(mensage[2])
+                print(dict_nodes_files)
 
         # Envia uma resposta de volta para o cliente
         response = mensage[1]
         client_socket.send(response.encode())
 
-        # Fecha a conexão com o cliente
-        client_socket.close()
+    # Fecha a conexão com o cliente
+    client_socket.close()
 
-        # Fecha o socket do servidor
-        server_socket.close()
+    # Fecha o socket do servidor
+    server_socket.close()
 
 Tracker()

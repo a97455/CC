@@ -21,9 +21,8 @@ def Node(node_name):
 
     # Recebe a resposta do servidor
     data = client_socket.recv(1024)
-    print(f"Servidor diz: {data.decode()}")
 
     # Fecha a conexão com o servidor
     client_socket.close()
-
+ 
 Node("node1")
