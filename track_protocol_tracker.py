@@ -27,23 +27,27 @@ def Tracker():
         print(f"Conexão de {addr[0]}:{addr[1]} estabelecida.")
 
         # Lê dados do cliente
-        lenght=int(client_socket.recv())
+        header=client_socket.recv(8).decode().split("|")
+        print(header)
 
-        data = client_socket.recv(lenght)
+        data_length = int.from_bytes(bytes.fromhex(header[1]),byteorder='big')
+        data = client_socket.recv(data_length)
+
         if not data:
             break
 
-        mensage=data.decode().split("|")
-        if (mensage[0]=="startConnection"):
-            if mensage[1] not in dict_nodes_files:
-                dict_nodes_files[mensage[1]]={}  
-        elif (mensage[0]=="filesDictNode"):
-            if mensage[1] not in dict_nodes_files:
-                dict_nodes_files[mensage[1]]=json.loads(mensage[2])
-                print(dict_nodes_files)
+        message=data.decode().split("|")
+        if (header[0]=="000"):
+            if message[0] not in dict_nodes_files:
+                dict_nodes_files[message[0]]={}  
+                print(dict_nodes_files) # test
+        elif (header[0]=="001"):
+            if message[0] not in dict_nodes_files:
+                dict_nodes_files[message[0]]=json.loads(message[1])
+                print(dict_nodes_files) # teste
 
         # Envia uma resposta de volta para o cliente
-        response = mensage[1]
+        response = message[1]
         client_socket.send(response.encode())
 
     # Fecha a conexão com o cliente
