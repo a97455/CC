@@ -4,7 +4,8 @@ import sys
 
 def Tracker():
     # Guarda informação dos nodos e seus respetivos ficheiros
-    dict_nodes_files = {}
+    # Para testar a filesDictNode (o node tem de estar no dicionário)
+    dict_nodes_files = {'node1':{}}
 
     # Configuração do servidor
     host = '127.0.0.1'
@@ -27,27 +28,31 @@ def Tracker():
         print(f"Conexão de {addr[0]}:{addr[1]} estabelecida.")
 
         # Lê dados do cliente
-        header=client_socket.recv(39).decode().split("|")
+        # FIXME: Para a função filesDictNode funciona com recv(36), para o startConnection tem de ser recv(39), não sei exatamente porque é que o tamanho do header é diferente nos 2
+        header=client_socket.recv(36).decode().split("|")
 
         data_length = int.from_bytes(eval(header[1].encode()),byteorder='big')
         data = client_socket.recv(data_length)
         
         if not data:
             break
-
-        message=data.decode().split("|")
+        
+        # message vai ser um dicionário
+        message=json.loads(data.decode())
         if (header[0]=="000"):
-            if message[0] not in dict_nodes_files:
-                dict_nodes_files[message[0]]={}  
+            if message['node_name'] not in dict_nodes_files:
+                dict_nodes_files[message['node_name']]={}  
                 print(dict_nodes_files) # test
         elif (header[0]=="001"):
-            if message[0] in dict_nodes_files:
-                dict_nodes_files[message[0]]=json.loads(message[1])
+            print("Entrei na 001")
+            if message['node_name'] in dict_nodes_files:
+                dict_nodes_files[message['node_name']] = message['filesDictNode']
                 print(dict_nodes_files) # teste
 
-        # Envia uma resposta de volta para o cliente
-        response = message[0]
-        client_socket.send(response.encode())
+                # Envia uma resposta de volta para o cliente
+                response = message['node_name']
+                client_socket.send(response.encode())
+            
 
     # Fecha a conexão com o cliente
     client_socket.close()
