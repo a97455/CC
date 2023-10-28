@@ -8,7 +8,7 @@ def Tracker():
     dict_nodes_files = {'node1':{}}
 
     # Configuração do servidor
-    host = '127.0.0.1'
+    host = '127.0.0.17'
     port = 12345
 
     # Cria o socket TCP
@@ -29,9 +29,9 @@ def Tracker():
 
         # Lê dados do cliente
         # FIXME: Para a função filesDictNode funciona com recv(36), para o startConnection tem de ser recv(39), não sei exatamente porque é que o tamanho do header é diferente nos 2
-        header=client_socket.recv(36).decode().split("|")
+        header=client_socket.recv(20).decode().split("|")
 
-        data_length = int.from_bytes(eval(header[1].encode()),byteorder='big')
+        data_length = int(header[1], 16)
         data = client_socket.recv(data_length)
         
         if not data:

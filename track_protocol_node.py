@@ -7,7 +7,7 @@ def Node(node_name):
     dict_files={'algo':'teste'}
 
     # Configuração do cliente
-    host = '127.0.0.1'
+    host = '127.0.0.17'
     port = 12345
 
     # Cria o socket TCP
