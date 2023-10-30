@@ -2,22 +2,11 @@ import socket
 import json
 import threading
 
-dict_nodes_files = {}
-
-import socket
-import json
-import threading
-
-dict_nodes_files = {}
-
 def connections(client_socket):
     while True:
         # Lê dados do cliente
         try:
             header = client_socket.recv(20).decode().split("|")
-
-            if len(header) < 2:
-                continue
 
             data_length = int(header[1], 16)
             data = client_socket.recv(data_length)
@@ -39,6 +28,7 @@ def connections(client_socket):
             # Envia uma resposta de volta para o cliente
             response = message['node_name']
             client_socket.send(response.encode())
+
         except Exception as e:
             print(f"Erro: {e}")
 
@@ -46,10 +36,12 @@ def connections(client_socket):
     client_socket.close()
 
 
-def tracker():
+def Tracker():
     # Configuração do servidor
     host = '127.0.0.17'
     port = 12345
+
+    dict_nodes_files = {} #Dicionario com os diversos nós e seus respetivos ficheiros (e blocos)
 
     # Cria o socket TCP
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -69,8 +61,7 @@ def tracker():
         minha_thread = threading.Thread(target=connections, args=(client_socket,))
         minha_thread.start()
 
-
     # Fecha o socket do servidor
     server_socket.close()
 
-tracker()
+Tracker()

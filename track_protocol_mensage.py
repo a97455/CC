@@ -15,7 +15,7 @@ def startConnection(client_socket,node_name):
     messageSize_in_bytes = len(message_json).to_bytes(8,'big')
 
     # messageSize_str ocupa 16 bytes
-    messageSize_str = messageSize_in_bytes.hex().zfill(16)
+    messageSize_str = messageSize_in_bytes.hex().zfill(16) # Convert bytes to hexadecimal string
 
     # header ocupa 20 bytes
     header = START_CONNECTION +"|"+ messageSize_str
@@ -28,9 +28,25 @@ def filesDictNode(client_socket,node_name,dict_files):
     messageSize_in_bytes = len(message_json).to_bytes(8,'big')
 
     # messageSize_str ocupa 16 bytes
-    messageSize_str = messageSize_in_bytes.hex().zfill(16)  # Convert bytes to hexadecimal string
+    messageSize_str = messageSize_in_bytes.hex().zfill(16)  
     
     # header ocupa 20 bytes
     header = FILES_DICT_NODE +"|"+ messageSize_str
     final = header + message_json
     client_socket.send(final.encode())
+
+def getFile(client_socket,filename):
+    # Envia dados para o servidor
+    message = {'filename': filename}
+    message_json = json.dumps(message)
+    messageSize_in_bytes = len(message_json).to_bytes(8,'big')
+
+    # messageSize_str ocupa 16 bytes
+    messageSize_str = messageSize_in_bytes.hex().zfill(16) # Convert bytes to hexadecimal string
+
+    # header ocupa 20 bytes
+    header = GET_FILE +"|"+ messageSize_str
+    final = header + message_json
+    client_socket.send(final.encode())
+
+def filesListTracker()
