@@ -4,8 +4,9 @@ import threading
 from track_protocol_mensage import *
 
 dict_nodes_files = {} #Dicionario com os diversos nós e o seu respetivo dict_files
+dict_nodes_adress = {} #Dicionario com os diversos nós e os seus endereços
 
-def connections(client_socket,server_socket):
+def Connections(client_socket,client_adress):
     while True:
         # Lê dados do cliente
         try:
@@ -23,14 +24,19 @@ def connections(client_socket,server_socket):
             if header[0] == "000":
                 if message['node_name'] not in dict_nodes_files:
                     dict_nodes_files[message['node_name']] = {}
+                    dict_nodes_adress[message['node_name']] = client_adress
             elif header[0] == "001":
                 if message['node_name'] in dict_nodes_files:
-                    dict_nodes_files[message['node_name']] = message['filesDictNode']
+                    dict_nodes_files[message['node_name']] = message['dict_files']
             elif header[0] == "010":
+                dict_nodeAdress_listBlocks = {} #Dicionario com o endereco do no (chave) e a lista dos blocos (valor) do ficheiro pedido
+                
                 for node_name,dict_files in dict_nodes_files.items():
                     for filename,list_blocks in dict_files.items():
                         if message['filename'] == filename:
-                            filesListTracker(server_socket,node_name,list_blocks)
+                            dict_nodeAdress_listBlocks[dict_nodes_adress[node_name]] = list_blocks
+                
+                filesListTracker(client_socket,dict_nodeAdress_listBlocks)
                 
             # Envia uma resposta de volta para o cliente
             response = message['node_name']
@@ -43,11 +49,7 @@ def connections(client_socket,server_socket):
     client_socket.close()
 
 
-def Tracker():
-    # Configuração do servidor
-    host = '127.0.0.17'
-    port = 12345
-
+def Tracker(host,port):
     # Cria o socket TCP
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -60,12 +62,12 @@ def Tracker():
     
     while True:
         # Aceita uma conexão
-        client_socket, addr = server_socket.accept()
-        print(f"Conexão de {addr[0]}:{addr[1]} estabelecida.")
-        minha_thread = threading.Thread(target=connections, args=(client_socket,server_socket,))
+        client_socket, client_adress = server_socket.accept()
+        print(f"Conexão de {client_adress[0]}:{client_adress[1]} estabelecida.")
+        minha_thread = threading.Thread(target=Connections, args=(client_socket,client_adress))
         minha_thread.start()
 
     # Fecha o socket do servidor
     server_socket.close()
 
-Tracker()
+Tracker('127.0.0.17',12345)

@@ -25,7 +25,7 @@ def startConnection(client_socket,node_name):
     client_socket.send(final.encode())
 
 def filesDictNode(client_socket,node_name,dict_files):
-    message = {'node_name' : node_name, 'filesDictNode' : dict_files}
+    message = {'node_name' : node_name, 'dict_files' : dict_files}
     message_json = json.dumps(message)
     messageSize_in_bytes = len(message_json).to_bytes(8,'big')
 
@@ -53,9 +53,9 @@ def getFile(client_socket,filename):
 
 #___________________________Tracker________________________________________
 
-def filesListTracker(server_socket,node_name,list_blocks):
+def filesListTracker(client_socket,dict_nodeAdress_listBlocks):
     # Envia dados para o no
-    message = {'node_name': node_name,'list_blocks': list_blocks}
+    message = {'dict_nodeAdress_listBlocks': dict_nodeAdress_listBlocks}
     message_json = json.dumps(message)
     messageSize_in_bytes = len(message_json).to_bytes(8,'big')
 
@@ -65,4 +65,4 @@ def filesListTracker(server_socket,node_name,list_blocks):
     # header ocupa 20 bytes
     header = FILES_LIST_TRACKER +"|"+ messageSize_str
     final = header + message_json
-    server_socket.send(final.encode())
+    client_socket.send(final.encode())
