@@ -1,8 +1,11 @@
 import socket
 import json
 import threading
+from track_protocol_mensage import *
 
-def connections(client_socket):
+dict_nodes_files = {} #Dicionario com os diversos nós e o seu respetivo dict_files
+
+def connections(client_socket,server_socket):
     while True:
         # Lê dados do cliente
         try:
@@ -23,14 +26,18 @@ def connections(client_socket):
             elif header[0] == "001":
                 if message['node_name'] in dict_nodes_files:
                     dict_nodes_files[message['node_name']] = message['filesDictNode']
-            elif header[0] == "110":
-                break
+            elif header[0] == "010":
+                for node_name,dict_files in dict_nodes_files.items():
+                    for filename,list_blocks in dict_files.items():
+                        if message['filename'] == filename:
+                            filesListTracker(server_socket,node_name,list_blocks)
+                
             # Envia uma resposta de volta para o cliente
             response = message['node_name']
             client_socket.send(response.encode())
 
-        except Exception as e:
-            print(f"Erro: {e}")
+        except Exception:
+            break
 
     # Fecha a conexão com o cliente
     client_socket.close()
@@ -41,8 +48,6 @@ def Tracker():
     host = '127.0.0.17'
     port = 12345
 
-    dict_nodes_files = {} #Dicionario com os diversos nós e seus respetivos ficheiros (e blocos)
-
     # Cria o socket TCP
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -51,14 +56,13 @@ def Tracker():
 
     # Escuta por conexões
     server_socket.listen(5)
-
     print(f"Servidor aguardando conexões em {host}:{port}...")
-
+    
     while True:
         # Aceita uma conexão
         client_socket, addr = server_socket.accept()
         print(f"Conexão de {addr[0]}:{addr[1]} estabelecida.")
-        minha_thread = threading.Thread(target=connections, args=(client_socket,))
+        minha_thread = threading.Thread(target=connections, args=(client_socket,server_socket,))
         minha_thread.start()
 
     # Fecha o socket do servidor

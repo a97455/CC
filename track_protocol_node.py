@@ -3,7 +3,7 @@ import time
 from track_protocol_mensage import *
 
 def Node(node_name,host,port):
-    # Dicionario com os blocos dos diversos ficheiros que lhe pertencem
+    # Dicionario com os nomes dos ficheiros que tem como chaves e os valores uma lista dos blocos desse ficheiro
     dict_files={}
 
     # Cria o socket TCP
@@ -19,7 +19,7 @@ def Node(node_name,host,port):
     data = client_socket.recv(1024)
     print("Servidor disse: " + data.decode())
 
-    # Não está a executar
+    # Mensagens para o servidor
     filesDictNode(client_socket,node_name,dict_files)
 
     data = client_socket.recv(1024)
@@ -27,5 +27,3 @@ def Node(node_name,host,port):
 
     # Fecha a conexão com o servidor
     client_socket.close()
- 
-Node("node1",'127.0.0.17',12345)

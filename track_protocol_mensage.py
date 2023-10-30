@@ -8,6 +8,8 @@ FILES_LIST_INSERT = "100"
 FILES_LIST_DELETE = "101"
 END_CONNECTION = "110"
 
+#___________________________Node________________________________________
+
 def startConnection(client_socket,node_name):
     # Envia dados para o servidor
     message = {'node_name': node_name}
@@ -49,4 +51,18 @@ def getFile(client_socket,filename):
     final = header + message_json
     client_socket.send(final.encode())
 
-def filesListTracker()
+#___________________________Tracker________________________________________
+
+def filesListTracker(server_socket,node_name,list_blocks):
+    # Envia dados para o no
+    message = {'node_name': node_name,'list_blocks': list_blocks}
+    message_json = json.dumps(message)
+    messageSize_in_bytes = len(message_json).to_bytes(8,'big')
+
+    # messageSize_str ocupa 16 bytes
+    messageSize_str = messageSize_in_bytes.hex().zfill(16) # Convert bytes to hexadecimal string
+
+    # header ocupa 20 bytes
+    header = FILES_LIST_TRACKER +"|"+ messageSize_str
+    final = header + message_json
+    server_socket.send(final.encode())
