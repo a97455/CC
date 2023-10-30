@@ -1,11 +1,52 @@
 import socket
 import json
-import sys
+import threading
 
-def Tracker():
-    # Guarda informação dos nodos e seus respetivos ficheiros
-    dict_nodes_files = {}
+dict_nodes_files = {}
 
+import socket
+import json
+import threading
+
+dict_nodes_files = {}
+
+def connections(client_socket):
+    while True:
+        # Lê dados do cliente
+        try:
+            header = client_socket.recv(20).decode().split("|")
+
+            if len(header) < 2:
+                continue
+
+            data_length = int(header[1], 16)
+            data = client_socket.recv(data_length)
+            
+            if not data:
+                break
+            
+            # message vai ser um dicionário
+            message = json.loads(data.decode())
+
+            if header[0] == "000":
+                if message['node_name'] not in dict_nodes_files:
+                    dict_nodes_files[message['node_name']] = {}
+            elif header[0] == "001":
+                if message['node_name'] in dict_nodes_files:
+                    dict_nodes_files[message['node_name']] = message['filesDictNode']
+            elif header[0] == "110":
+                break
+            # Envia uma resposta de volta para o cliente
+            response = message['node_name']
+            client_socket.send(response.encode())
+        except Exception as e:
+            print(f"Erro: {e}")
+
+    # Fecha a conexão com o cliente
+    client_socket.close()
+
+
+def tracker():
     # Configuração do servidor
     host = '127.0.0.17'
     port = 12345
@@ -25,35 +66,11 @@ def Tracker():
         # Aceita uma conexão
         client_socket, addr = server_socket.accept()
         print(f"Conexão de {addr[0]}:{addr[1]} estabelecida.")
+        minha_thread = threading.Thread(target=connections, args=(client_socket,))
+        minha_thread.start()
 
-        # Lê dados do cliente
-        header=client_socket.recv(20).decode().split("|")
-
-        data_length = int(header[1], 16)
-        data = client_socket.recv(data_length)
-        
-        if not data:
-            break
-        
-        # message vai ser um dicionário
-        message=json.loads(data.decode())
-
-        if (header[0]=="000"):
-            if message['node_name'] not in dict_nodes_files:
-                dict_nodes_files[message['node_name']]={}  
-        elif (header[0]=="001"):
-            if message['node_name'] in dict_nodes_files:
-                dict_nodes_files[message['node_name']] = message['filesDictNode']
-
-        # Envia uma resposta de volta para o cliente
-        response = message['node_name']
-        client_socket.send(response.encode())
-            
-
-    # Fecha a conexão com o cliente
-    client_socket.close()
 
     # Fecha o socket do servidor
     server_socket.close()
 
-Tracker()
+tracker()
