@@ -4,11 +4,9 @@ START_CONNECTION = "000"
 FILES_DICT_NODE = "001"
 GET_FILE = "010"
 FILES_LIST_TRACKER = "011" 
-FILES_LIST_INSERT = "100"
-FILES_LIST_DELETE = "101"
-END_CONNECTION = "110"
+END_CONNECTION = "100"
 
-#___________________________Node________________________________________
+#___________________________Node_Send________________________________________
 
 def startConnection(client_socket,node_name):
     # Envia dados para o servidor
@@ -51,7 +49,21 @@ def getFile(client_socket,filename):
     final = header + message_json
     client_socket.send(final.encode())
 
-#___________________________Tracker________________________________________
+def endConnection(client_socket,node_name):
+    # Envia dados para o servidor
+    message = {'node_name': node_name}
+    message_json = json.dumps(message)
+    messageSize_in_bytes = len(message_json).to_bytes(8,'big')
+
+    # messageSize_str ocupa 16 bytes
+    messageSize_str = messageSize_in_bytes.hex().zfill(16) # Convert bytes to hexadecimal string
+
+    # header ocupa 20 bytes
+    header = END_CONNECTION +"|"+ messageSize_str
+    final = header + message_json
+    client_socket.send(final.encode())
+
+#___________________________Tracker_Send________________________________________
 
 def filesListTracker(client_socket,dict_nodeAdress_listBlocks):
     # Envia dados para o no

@@ -25,5 +25,11 @@ def Node(node_name,host,port):
     data = client_socket.recv(1024)
     print("Ficheiros locais recebidos: " + data.decode())
 
+    # Mensagens para o servidor
+    endConnection(client_socket,node_name)
+
+    data = client_socket.recv(1024)
+    print("Conexão Terminada: " + data.decode())
+
     # Fecha a conexão com o servidor
     client_socket.close()

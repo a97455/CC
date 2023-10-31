@@ -3,8 +3,8 @@ import json
 import threading
 from track_protocol_mensage import *
 
-dict_nodes_files = {} #Dicionario com os diversos nós e o seu respetivo dict_files
-dict_nodes_adress = {} #Dicionario com os diversos nós e os seus endereços
+dict_nodes_files = {} #Dicionario com os diversos nós(nome) e o seu respetivo dict_files
+dict_nodes_adress = {} #Dicionario com os diversos nós(nome) e os seus endereços (host,port)
 
 def Connections(client_socket,client_adress):
     while True:
@@ -37,6 +37,10 @@ def Connections(client_socket,client_adress):
                             dict_nodeAdress_listBlocks[dict_nodes_adress[node_name]] = list_blocks
                 
                 filesListTracker(client_socket,dict_nodeAdress_listBlocks)
+            elif header[0] == '100':
+                if message['node_name'] in dict_nodes_files:
+                    dict_nodes_files.pop(message['node_name'])
+                    dict_nodes_adress.pop(message['node_name'])
                 
             # Envia uma resposta de volta para o cliente
             response = message['node_name']
