@@ -1,12 +1,12 @@
 import socket
 import json
 import threading
-from track_protocol_mensage import *
+import track_protocol_mensage as tpm
 
 dict_nodes_files = {} #Dicionario com os diversos nós(nome) e o seu respetivo dict_files
-dict_nodes_adress = {} #Dicionario com os diversos nós(nome) e os seus endereços (host,port)
+dict_nodes_address = {} #Dicionario com os diversos nós(nome) e os seus endereços (host,port)
 
-def Connections(client_socket,client_adress):
+def Connections(client_socket,client_address):
     while True:
         # Lê dados do cliente
         try:
@@ -24,23 +24,23 @@ def Connections(client_socket,client_adress):
             if header[0] == "000":
                 if message['node_name'] not in dict_nodes_files:
                     dict_nodes_files[message['node_name']] = {}
-                    dict_nodes_adress[message['node_name']] = client_adress
+                    dict_nodes_address[message['node_name']] = client_address
             elif header[0] == "001":
                 if message['node_name'] in dict_nodes_files:
                     dict_nodes_files[message['node_name']] = message['dict_files']
             elif header[0] == "010":
-                dict_nodeAdress_listBlocks = {} #Dicionario com o endereco do no (chave) e a lista dos blocos (valor) do ficheiro pedido
+                dict_nodeAddress_listBlocks = {} # Dicionario com o endereco do nó (chave) e a lista dos blocos (valor) do ficheiro pedido
                 
                 for node_name,dict_files in dict_nodes_files.items():
                     for filename,list_blocks in dict_files.items():
                         if message['filename'] == filename:
-                            dict_nodeAdress_listBlocks[dict_nodes_adress[node_name]] = list_blocks
+                            dict_nodeAddress_listBlocks[dict_nodes_address[node_name]] = list_blocks
                 
-                filesListTracker(client_socket,dict_nodeAdress_listBlocks)
+                tpm.filesListTracker(client_socket,dict_nodeAddress_listBlocks)
             elif header[0] == '100':
                 if message['node_name'] in dict_nodes_files:
                     dict_nodes_files.pop(message['node_name'])
-                    dict_nodes_adress.pop(message['node_name'])
+                    dict_nodes_address.pop(message['node_name'])
                 
             # Envia uma resposta de volta para o cliente
             response = message['node_name']

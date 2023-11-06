@@ -65,9 +65,9 @@ def endConnection(client_socket,node_name):
 
 #___________________________Tracker_Send________________________________________
 
-def filesListTracker(client_socket,dict_nodeAdress_listBlocks):
+def filesListTracker(client_socket,dict_nodeAddress_listBlocks):
     # Envia dados para o no
-    message = {'dict_nodeAdress_listBlocks': dict_nodeAdress_listBlocks}
+    message = {'dict_nodeAddress_listBlocks': dict_nodeAddress_listBlocks}
     message_json = json.dumps(message)
     messageSize_in_bytes = len(message_json).to_bytes(8,'big')
 
