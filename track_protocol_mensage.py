@@ -8,9 +8,9 @@ END_CONNECTION = "100"
 
 #___________________________Node_Send________________________________________
 
-def startConnection(client_socket,node_name):
+def startConnection(client_socket):
     # Envia dados para o servidor
-    message = {'node_name': node_name}
+    message = {}
     message_json = json.dumps(message)
     messageSize_in_bytes = len(message_json).to_bytes(8,'big')
 
@@ -22,8 +22,8 @@ def startConnection(client_socket,node_name):
     final = header + message_json
     client_socket.send(final.encode())
 
-def filesDictNode(client_socket,node_name,dict_files):
-    message = {'node_name' : node_name, 'dict_files' : dict_files}
+def filesDictNode(client_socket,dict_files):
+    message = {'dict_files' : dict_files}
     message_json = json.dumps(message)
     messageSize_in_bytes = len(message_json).to_bytes(8,'big')
 
@@ -49,9 +49,9 @@ def getFile(client_socket,filename):
     final = header + message_json
     client_socket.send(final.encode())
 
-def endConnection(client_socket,node_name):
+def endConnection(client_socket):
     # Envia dados para o servidor
-    message = {'node_name': node_name}
+    message = {}
     message_json = json.dumps(message)
     messageSize_in_bytes = len(message_json).to_bytes(8,'big')
 
