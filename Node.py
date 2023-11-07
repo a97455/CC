@@ -81,9 +81,10 @@ def interactive_mode(node):
             filename = input("Enter the filename: ")
             node.getFile(filename)
         elif choice == "2":
-            break
+            node.endConnection()
         else:
             print("Invalid choice. Please try again.")
+
 
 if __name__ == '__main__':
     if len(sys.argv) != 4:
@@ -100,7 +101,5 @@ if __name__ == '__main__':
 
     try:
         interactive_mode(node)
-    except Exception as e:
-        print(f"An error occurred: {e}")
-    finally:
+    except KeyboardInterrupt:
         node.endConnection()
