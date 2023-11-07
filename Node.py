@@ -9,29 +9,29 @@ class Node:
         # Dicionario com os nomes dos ficheiros (chave) e uma lista dos blocos que tem desse ficheiro (valor)
         self.dict_files = {}
         
+        # adiciona os ficheiro do folder_path ao dict_files
         for file in os.listdir(folder_path):
             if os.path.isfile(os.path.join(folder_path, file)):
-                self.dict_files[file] = file
+                self.dict_files[file] = file #falta meter a lista de blocos ao inves do nome do ficheiro
         
         # Cria o socket TCP
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
         # Conecta ao servidor
         self.client_socket.connect((host, port))
-        
+
+
     def startConnection(self):
         # Mensagens para o servidor
         tpm.startConnection(self.client_socket)
+
         # Recebe a resposta do servidor
         data = self.client_socket.recv(1024)
-        print("Conexão realizada: " + data.decode())
+        print(data.decode())
     
+
     def filesDictNode(self):
         # Mensagens para o servidor
         tpm.filesDictNode(self.client_socket,self.dict_files)
-        data = self.client_socket.recv(1024)
-        print("Ficheiros locais recebidos: " + data.decode())
-
 
     def getFile(self,filename):
         # Mensagens para o servidor
@@ -51,6 +51,8 @@ class Node:
                     dict_nodeAddress_listBlocks = message['dict_nodeAddress_listBlocks']
 
                     # funcao para transferir o ficheiro ou parte dele de um no(transfer_protocol) 
+
+                    # reenvia o seu dict_files para o Tracker (já com o novo ficheiro transferido)
                     self.filesDictNode(self.client_socket,self.dict_files)
                     break
 
@@ -61,8 +63,7 @@ class Node:
         # Mensagens para o servidor
         tpm.endConnection(self.client_socket)
 
-        data = self.client_socket.recv(1024)
-        print("Conexão Terminada.")
+        print("\nConexão Terminada.")
 
         # Fecha a conexão com o servidor
         self.client_socket.close()
@@ -71,28 +72,22 @@ class Node:
 def interactive_mode(node):
     while True:
         print("\nChoose an option:")
-        print("1. Start Connection")
-        print("2. Send Files Dictionary to Tracker")
-        print("3. Get File")
-        print("4. Exit")
+        print("1. Get File")
+        print("2. Exit")
 
         choice = input("Enter your choice: ")
 
         if choice == "1":
-            node.startConnection()
-        elif choice == "2":
-            node.filesDictNode()
-        elif choice == "3":
             filename = input("Enter the filename: ")
             node.getFile(filename)
-        elif choice == "4":
+        elif choice == "2":
             break
         else:
             print("Invalid choice. Please try again.")
 
 if __name__ == '__main__':
     if len(sys.argv) != 4:
-        print("Usage: python3 Node.py folder_path host port")
+        print("Use: python3 Node.py folder_path host port")
         sys.exit(1)
 
     folder_path = sys.argv[1]
@@ -100,6 +95,8 @@ if __name__ == '__main__':
     port = int(sys.argv[3])
 
     node = Node(folder_path, host, port)
+    node.startConnection()
+    node.filesDictNode()
 
     try:
         interactive_mode(node)
