@@ -6,9 +6,9 @@ import track_protocol_mensage as tpm
 
 class Node:
     def __init__(self,folder_path,host,port):
-        # Dicionario com os nomes dos ficheiros (chave) e uma lista dos blocos que tem desse ficheiro (valor)
+        # Dicionario com os filenames (chave) e uma lista dos blocos que tem desse ficheiro (valor)
         self.dict_files_inBlocks = {}
-        # Dicionario com os nomes dos ficheiros (chave) e o numero de blocos que esse ficheiro tem (valor)
+        # Dicionario com os filenames (chave) e o numero de blocos que esse ficheiro tem (valor)
         self.dict_files_complete = {}
         
         # adiciona os ficheiro do folder_path ao dict_files

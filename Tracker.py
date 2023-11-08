@@ -9,8 +9,8 @@ class Tracker:
     def __init__(self,host,port): 
         #Dicionario com os diversos endereços de nós (host,port) e o seu respetivo nome
         self.dict_address_nodeName = {}
-        #Dicionario com os diversos nós(endereco) e o seu tuple (filename,listBlocks)
-        self.dict_address_filesTuple = {}
+        #Dicionario com os diversos nós(endereco) e a sua lista de tuplos (filename,listBlocks)
+        self.dict_address_ListfilesTuple = {}
         #Dicionario com os diversos ficheiros (filename) e o seu respetivo numero de blocos
         self.dict_filename_numBlocks = {} 
 
@@ -52,7 +52,7 @@ class Tracker:
                 # message vai ser um dicionário
                 message = json.loads(data.decode())
 
-                if header[0] == "000":
+                if header[0] == "000": #starConnection
                     if client_address not in self.dict_address_nodeName:
                         node_name="Node"+str(Tracker.node_count)
                         Tracker.node_count+=1
@@ -63,29 +63,30 @@ class Tracker:
                         response = "Conexão realizada: "+node_name
                         client_socket.send(response.encode())
 
-                elif header[0] == "001":
+                elif header[0] == "001": #sendDictsFiles
                     if client_address in self.dict_address_nodeName:
+                        self.dict_address_ListfilesTuple[client_address] = []
                         for filename,list_blocks in message['dict_files_inBlocks'].items():
-                            self.dict_address_filesTuple[client_address] = (filename,list_blocks)
+                            self.dict_address_ListfilesTuple[client_address].append((filename,list_blocks))
                         for filename,numBlocks in message['dict_files_complete'].items():
                             self.dict_filename_numBlocks[filename] = numBlocks
-                            self.dict_address_filesTuple[client_address] = (filename,[i for i in range(1, numBlocks+1)])
+                            self.dict_address_ListfilesTuple[client_address] = (filename,[i for i in range(1, numBlocks+1)])
 
-                elif header[0] == "010":
+                elif header[0] == "010": #getFile
                     dict_nodeAddress_listBlocks = {} # Dicionario com o endereco do nó (chave) e a lista dos blocos (valor) do ficheiro pedido
                 
-                    for node_address,(filename,list_blocks) in self.dict_address_filesTuple.items():
+                    for node_address,(filename,list_blocks) in self.dict_address_ListfilesTuple.items():
                         if message['filename'] == filename:
                             dict_nodeAddress_listBlocks[node_address] = list_blocks
                     
                     numBlocks = self.dict_filename_numBlocks[message['filename']]
                     tpm.filesListTracker(client_socket,dict_nodeAddress_listBlocks,numBlocks)
                 
-                elif header[0] == '100':
+                elif header[0] == '100': #endConnection
                     if client_address in self.dict_address_nodeName:
                         #Informacao sobre os ficheiros matem-se no Tracker
                         self.dict_address_nodeName.pop(client_address)
-                        self.dict_address_filesTuple.pop(client_address)
+                        self.dict_address_ListfilesTuple.pop(client_address)
 
             except IndexError:
                 break
