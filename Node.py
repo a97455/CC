@@ -7,12 +7,26 @@ import track_protocol_mensage as tpm
 class Node:
     def __init__(self,folder_path,host,port):
         # Dicionario com os nomes dos ficheiros (chave) e uma lista dos blocos que tem desse ficheiro (valor)
-        self.dict_files = {}
+        self.dict_files_inBlocks = {}
+        # Dicionario com os nomes dos ficheiros (chave) e o numero de blocos que esse ficheiro tem (valor)
+        self.dict_files_complete = {}
         
         # adiciona os ficheiro do folder_path ao dict_files
-        for file in os.listdir(folder_path):
-            if os.path.isfile(os.path.join(folder_path, file)):
-                self.dict_files[file] = file #falta meter a lista de blocos ao inves do nome do ficheiro
+        for item in os.listdir(folder_path):
+            item_path = os.path.join(folder_path, item)
+            if os.path.isfile(item_path):
+                # Calculate the number of blocks of 1024 bytes
+                file_size = os.path.getsize(item_path)
+                num_blocks = (file_size + 1023) // 1024
+                self.dict_files_complete[item] = num_blocks
+            elif os.path.isdir(item_path):
+                # Aqui você deve percorrer os arquivos na diretoria específica 'item_path'
+                self.dict_files_inBlocks[item] = []
+                for block in os.listdir(item_path):
+                    block_path = os.path.join(item_path, block)
+                    if os.path.isfile(block_path):
+                        self.dict_files_inBlocks[item].append(block)
+
         
         # Cria o socket TCP
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -29,9 +43,10 @@ class Node:
         print(data.decode())
     
 
-    def filesDictNode(self):
+    def sendDictsFiles(self):
         # Mensagens para o servidor
-        tpm.filesDictNode(self.client_socket,self.dict_files)
+        tpm.sendDictsFiles(self.client_socket,self.dict_files_inBlocks,self.dict_files_complete)
+
 
     def getFile(self,filename):
         # Mensagens para o servidor

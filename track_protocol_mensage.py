@@ -1,7 +1,7 @@
 import json
 
 START_CONNECTION = "000"
-FILES_DICT_NODE = "001"
+SEND_DICTS_FILES = "001"
 GET_FILE = "010"
 FILES_LIST_TRACKER = "011" 
 END_CONNECTION = "100"
@@ -22,8 +22,8 @@ def startConnection(client_socket):
     final = header + message_json
     client_socket.send(final.encode())
 
-def filesDictNode(client_socket,dict_files):
-    message = {'dict_files' : dict_files}
+def sendDictsFiles(client_socket,dict_files_inBlocks,dict_files_complete):
+    message = {'dict_files_inBlocks' : dict_files_inBlocks, 'dict_files_complete':dict_files_complete}
     message_json = json.dumps(message)
     messageSize_in_bytes = len(message_json).to_bytes(8,'big')
 
@@ -31,7 +31,7 @@ def filesDictNode(client_socket,dict_files):
     messageSize_str = messageSize_in_bytes.hex().zfill(16)  
     
     # header ocupa 20 bytes
-    header = FILES_DICT_NODE +"|"+ messageSize_str
+    header = SEND_DICTS_FILES +"|"+ messageSize_str
     final = header + message_json
     client_socket.send(final.encode())
 
@@ -65,9 +65,9 @@ def endConnection(client_socket):
 
 #___________________________Tracker_Send________________________________________
 
-def filesListTracker(client_socket,dict_nodeAddress_listBlocks):
+def filesListTracker(client_socket,dict_nodeAddress_listBlocks,numBlocks):
     # Envia dados para o no
-    message = {'dict_nodeAddress_listBlocks': dict_nodeAddress_listBlocks}
+    message = {'dict_nodeAddress_listBlocks': dict_nodeAddress_listBlocks,'numBlocks':numBlocks}
     message_json = json.dumps(message)
     messageSize_in_bytes = len(message_json).to_bytes(8,'big')
 
