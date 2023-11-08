@@ -82,6 +82,7 @@ def interactive_mode(node):
             node.getFile(filename)
         elif choice == "2":
             node.endConnection()
+            break
         else:
             print("Invalid choice. Please try again.")
 

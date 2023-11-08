@@ -10,7 +10,7 @@ class Tracker:
         #Dicionario com os diversos endereços de nós (host,port) e o seu respetivo nome
         self.dict_address_nodeName = {}
         #Dicionario com os diversos nós(nome) e o seu respetivo dict_file 
-        self.dict_nodeName_dictFiles = {}
+        self.dict_address_dictFiles = {}
 
         try:
             # Cria o socket TCP
@@ -56,29 +56,29 @@ class Tracker:
                         Tracker.node_count+=1
                         
                         self.dict_address_nodeName[client_address] = node_name
-                        self.dict_nodeName_dictFiles[node_name] = {}
+                        self.dict_address_dictFiles[client_address] = {}
 
                         # Envia uma resposta de volta para o cliente
-                        response = "Conexão realizada: "+self.dict_address_nodeName[client_address]
+                        response = "Conexão realizada: "+node_name
                         client_socket.send(response.encode())
 
                 elif header[0] == "001":
                     if client_address in self.dict_address_nodeName:
-                        self.dict_nodeName_dictFiles[self.dict_address_nodeName[client_address]] = message['dict_files']
+                        self.dict_address_dictFiles[client_address] = message['dict_files']
                 
                 elif header[0] == "010":
                     dict_nodeAddress_listBlocks = {} # Dicionario com o endereco do nó (chave) e a lista dos blocos (valor) do ficheiro pedido
                     
-                    for node_name,dict_files in self.dict_nodeName_dictFiles.items():
+                    for node_address,dict_files in self.dict_address_dictFiles.items():
                         for filename,list_blocks in dict_files.items():
                             if message['filename'] == filename:
-                                dict_nodeAddress_listBlocks[self.dict_address_nodeName[node_name]] = list_blocks
+                                dict_nodeAddress_listBlocks[node_address] = list_blocks
                     
                     tpm.filesListTracker(client_socket,dict_nodeAddress_listBlocks)
                 
                 elif header[0] == '100':
                     if client_address in self.dict_address_nodeName:
-                        self.dict_nodeName_dictFiles.pop(self.dict_address_nodeName[client_address])
+                        self.dict_address_dictFiles.pop(client_address)
                         self.dict_address_nodeName.pop(client_address)
 
             except IndexError:
