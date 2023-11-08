@@ -15,9 +15,9 @@ class Node:
         for item in os.listdir(folder_path):
             item_path = os.path.join(folder_path, item)
             if os.path.isfile(item_path):
-                # Calculate the number of blocks of 1024 bytes
+                # Calculate the number of blocks of 128 bytes
                 file_size = os.path.getsize(item_path)
-                num_blocks = (file_size + 1023) // 1024
+                num_blocks = (file_size + 127) // 128
                 self.dict_files_complete[item] = num_blocks
             elif os.path.isdir(item_path):
                 # Aqui você deve percorrer os arquivos na diretoria específica 'item_path'
@@ -113,7 +113,7 @@ if __name__ == '__main__':
 
     node = Node(folder_path, host, port)
     node.startConnection()
-    node.filesDictNode()
+    node.sendDictsFiles()
 
     try:
         interactive_mode(node)
