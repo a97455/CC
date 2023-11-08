@@ -2,6 +2,7 @@ import socket
 import os
 import json
 import sys
+import random
 import track_protocol_mensage as tpm
 
 class Node:
@@ -49,30 +50,38 @@ class Node:
 
 
     def getFile(self,filename):
-        # Mensagens para o servidor
-        tpm.getFile(self.client_socket,filename)
-        
-        while True:
-            try:
-                header = self.client_socket.recv(20).decode().split("|")
+        if filename not in self.dict_files_complete:
+            # Mensagens para o servidor
+            tpm.getFile(self.client_socket,filename)
+            
+            while True:
+                try:
+                    header = self.client_socket.recv(20).decode().split("|")
 
-                data_length = int(header[1], 16)
-                data = self.client_socket.recv(data_length)
-                
-                # message vai ser um dicionário
-                message = json.loads(data.decode())
+                    data_length = int(header[1], 16)
+                    data = self.client_socket.recv(data_length)
+                    
+                    # message vai ser um dicionário
+                    message = json.loads(data.decode())
 
-                if header[0] == "011":
-                    dict_nodeAddress_listBlocks = message['dict_nodeAddress_listBlocks']
+                    if header[0] == "011":
+                        dict_BlockList_Nodes = message['dict_BlockList_Nodes']
 
-                    # funcao para transferir o ficheiro ou parte dele de um no(transfer_protocol) 
+                        for block,listNodes in dict_BlockList_Nodes.items():
+                            if block not in self.dict_files_inBlocks:
+                                node_selected = random.choice(listNodes)
+                                break #break vai sair
+                                # funcao para transferir o bloco de outro no 
+                                # (udp -> que pede o ficheiro,bloco do ficheiro e o nodo de onde vai transferir)
 
-                    # reenvia o seu dict_files para o Tracker (já com o novo ficheiro transferido)
-                    self.filesDictNode(self.client_socket,self.dict_files)
-                    break
+                        # reenvia os seus dicionarios para o Tracker (já com o novo ficheiro transferido)
+                        self.sendDictsFiles()
+                        break
 
-            except Exception:
-                continue
+                except Exception:
+                    continue
+        else:
+            print("Ja possui o ficheiro completo")
 
     def endConnection(self):
         # Mensagens para o servidor
