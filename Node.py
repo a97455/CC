@@ -3,10 +3,13 @@ import os
 import json
 import sys
 import random
+import threading
+import Transfer as trs
 import track_protocol_mensage as tpm
+import transfer_protocol_mensage as trspm
 
 class Node:
-    def __init__(self,folder_path,host,port):
+    def __init__(self,folder_path,serverHost,serverPort):
         # Dicionario com os filenames (chave) e uma lista dos blocos que tem desse ficheiro (valor)
         self.dict_files_inBlocks = {}
         # Dicionario com os filenames (chave) e o numero de blocos que esse ficheiro tem (valor)
@@ -21,7 +24,6 @@ class Node:
                 num_blocks = (file_size + 127) // 128
                 self.dict_files_complete[item] = num_blocks
             elif os.path.isdir(item_path):
-                # Aqui você deve percorrer os arquivos na diretoria específica 'item_path'
                 self.dict_files_inBlocks[item] = []
                 for block in os.listdir(item_path):
                     block_path = os.path.join(item_path, block)
@@ -29,37 +31,42 @@ class Node:
                         self.dict_files_inBlocks[item].append(block)
 
         
-        # Cria o socket TCP
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # Criação do socket TCP
+        self.socketTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # Conecta ao servidor
-        self.client_socket.connect((host, port))
+        self.socketTCP.connect((serverHost, serverPort))
 
 
     def startConnection(self):
         # Mensagens para o servidor
-        tpm.startConnection(self.client_socket)
+        tpm.startConnection(self.socketTCP)
 
-        # Recebe a resposta do servidor
-        data = self.client_socket.recv(1024)
-        print(data.decode())
-    
+        # Recebe a resposta do servidor (nodeAddress -> (nodeHost, nodePortTCP))
+        nodeAddress = self.socketTCP.recv(1024)
+        self.host=nodeAddress[0]
+        
+        # Criação do socket UDP
+        self.socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # Associa o socket ao endereço e à porta
+        self.socketUDP.bind((self.host, 9090))
+
 
     def sendDictsFiles(self):
         # Mensagens para o servidor
-        tpm.sendDictsFiles(self.client_socket,self.dict_files_inBlocks,self.dict_files_complete)
+        tpm.sendDictsFiles(self.socketTCP,self.dict_files_inBlocks,self.dict_files_complete)
 
 
-    def getFile(self,filename):
+    def getFile(self,filename,folder_path):
         if filename not in self.dict_files_complete:
             # Mensagens para o servidor
-            tpm.getFile(self.client_socket,filename)
+            tpm.getFile(self.socketTCP,filename)
             
             while True:
                 try:
-                    header = self.client_socket.recv(20).decode().split("|")
+                    header = self.socketTCP.recv(20).decode().split("|")
 
                     data_length = int(header[1], 16)
-                    data = self.client_socket.recv(data_length)
+                    data = self.socketTCP.recv(data_length)
                     
                     # message vai ser um dicionário
                     message = json.loads(data.decode())
@@ -70,9 +77,12 @@ class Node:
                         for block,listNodes in dict_BlockList_Nodes.items():
                             if block not in self.dict_files_inBlocks:
                                 node_selected = random.choice(listNodes)
-                                break #break vai sair
-                                # funcao para transferir o bloco de outro no 
-                                # (udp -> que pede o ficheiro,bloco do ficheiro e o nodo de onde vai transferir)
+                                trspm.getBlock(self.socketUDP,node_selected[0],block,filename)
+
+                                #espera pela resposta com o bloco pedido
+                                blockReceived = self.socketUDP.recvfrom(1024)
+                                block_path=os.path.join(folder_path,f'{block}')
+                                binary_to_file(blockReceived,block_path)
 
                         # reenvia os seus dicionarios para o Tracker (já com o novo ficheiro transferido)
                         self.sendDictsFiles()
@@ -81,16 +91,21 @@ class Node:
                 except Exception:
                     continue
         else:
-            print("Ja possui o ficheiro completo")
+            print("Já possui o ficheiro completo")
 
     def endConnection(self):
         # Mensagens para o servidor
-        tpm.endConnection(self.client_socket)
+        tpm.endConnection(self.socketTCP)
 
         print("\nConexão Terminada.")
 
         # Fecha a conexão com o servidor
-        self.client_socket.close()
+        self.socketTCP.close()
+
+    
+def binary_to_file(binary_data, output_file_path):
+    with open(output_file_path, 'wb') as file:
+        file.write(binary_data)
 
 
 def interactive_mode(node):
@@ -113,18 +128,27 @@ def interactive_mode(node):
 
 if __name__ == '__main__':
     if len(sys.argv) != 4:
-        print("Use: python3 Node.py folder_path host port")
+        print("Use: python3 Node.py folder_path trackerHost trackerPort")
         sys.exit(1)
 
     folder_path = sys.argv[1]
-    host = sys.argv[2]
-    port = int(sys.argv[3])
+    trackerHost = sys.argv[2]
+    trackerPort = int(sys.argv[3])
 
-    node = Node(folder_path, host, port)
+    node = Node(folder_path, trackerHost, trackerPort)
     node.startConnection()
     node.sendDictsFiles()
 
     try:
+        # Cria uma nova thread para cada esperar receber pedidos de blocos no seu socketUDP
+        transfer_thread = threading.Thread(target=trs.Transfer, args=(node.host,node.socketUDP,folder_path,
+                                                                      node.dict_files_inBlocks,
+                                                                      node.dict_files_complete))
+        transfer_thread.daemon=True # termina as threads mal o precesso principal morra
+        transfer_thread.start()
+
+        # Thread principal vai lidar com os pedidos de ficheiros no node
         interactive_mode(node)
+        
     except KeyboardInterrupt:
         node.endConnection()

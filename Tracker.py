@@ -7,11 +7,11 @@ class Tracker:
     node_count=1
 
     def __init__(self,host,port): 
-        #Dicionario com os diversos endereços de nós (host,port) e o seu respetivo nome
+        # Dicionario com os diversos endereços de nós (host,port) e o seu respetivo nome
         self.dict_address_nodeName = {}
-        #Dicionario com os diversos ficheiros (filename) e o seu dicionario que relaciona os seus blocos (chave) com a lista de nodos onde eles existem (valor)
+        # Dicionario com os diversos ficheiros (filename) e o seu dicionario que relaciona os seus blocos (chave) com a lista de nodos onde eles existem (valor)
         self.dict_filename_dictBlockListNodes = {}
-        #Dicionario com os diversos ficheiros (filename) e o seu respetivo numero de blocos
+        # Dicionario com os diversos ficheiros (filename) e o seu respetivo numero de blocos
         self.dict_filename_numBlocks = {} 
 
         try:
@@ -30,7 +30,7 @@ class Tracker:
 
                 # Cria uma nova thread para cada nova conexão estabelecida
                 connections_thread = threading.Thread(target=self.Connections, args=(client_socket,client_adress))
-                connections_thread.daemon=True #termina as threads mal o precesso principal morra
+                connections_thread.daemon = True # termina as threads mal o precesso principal morra
                 connections_thread.start()
 
 
@@ -52,18 +52,18 @@ class Tracker:
                 # message vai ser um dicionário
                 message = json.loads(data.decode())
 
-                if header[0] == "000": #starConnection
+                if header[0] == "000": # starConnection
                     if client_address not in self.dict_address_nodeName:
-                        node_name="Node"+str(Tracker.node_count)
-                        Tracker.node_count+=1
+                        node_name = "Node" + str(Tracker.node_count)
+                        Tracker.node_count += 1
                         
                         self.dict_address_nodeName[client_address] = node_name
 
                         # Envia uma resposta de volta para o cliente
-                        response = "Conexão realizada: "+node_name
+                        response = client_address
                         client_socket.send(response.encode())
 
-                elif header[0] == "001": #sendDictsFiles
+                elif header[0] == "001": # sendDictsFiles
                     for filename,list_blocks in message['dict_files_inBlocks'].items():
                         if filename not in self.dict_filename_dictBlockListNodes:
                             self.dict_filename_dictBlockListNodes[filename] = {}
@@ -87,13 +87,13 @@ class Tracker:
                             else:
                                 self.dict_filename_dictBlockListNodes[filename][block] = [client_address]
 
-                elif header[0] == "010": #getFile
+                elif header[0] == "010": # getFile
                     if message['filename'] not in self.dict_filename_numBlocks:
-                        print("Nenhum no do servidor tem o ficheiro inteiro")
+                        print("Nenhum nó do servidor tem o ficheiro inteiro")
                     else:
                         tpm.sendDictBlockListNodes(client_socket,self.dict_filename_dictBlockListNodes[filename],self.dict_filename_numBlocks[filename])
                 
-                elif header[0] == '100': #endConnection
+                elif header[0] == '100': # endConnection
                     if client_address in self.dict_address_nodeName:
                         self.dict_address_nodeName.pop(client_address)
                         for dictBlockListNodes in self.dict_filename_dictBlockListNodes.values():
