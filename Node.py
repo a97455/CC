@@ -107,7 +107,7 @@ def binary_to_file(binary_data, output_file_path):
         file.write(binary_data)
 
 
-def interactive_mode(node):
+def interactive_mode(node,folder_path):
     while True:
         print("\nChoose an option:")
         print("1. Get File")
@@ -117,7 +117,7 @@ def interactive_mode(node):
 
         if choice == "1":
             filename = input("Enter the filename: ")
-            node.getFile(filename)
+            node.getFile(filename,folder_path)
         elif choice == "2":
             node.endConnection()
             break
@@ -147,7 +147,7 @@ if __name__ == '__main__':
         transfer_thread.start()
 
         # Thread principal vai lidar com os pedidos de ficheiros no node
-        interactive_mode(node)
+        interactive_mode(node,folder_path)
         
     except KeyboardInterrupt:
         node.endConnection()
