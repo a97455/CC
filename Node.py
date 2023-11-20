@@ -41,10 +41,9 @@ class Node:
         # Mensagens para o servidor
         tpm.startConnection(self.socketTCP)
 
-        # Recebe a resposta do servidor (nodeAddress -> (nodeHost, nodePortTCP))
-        nodeAddress = self.socketTCP.recv(1024)
-        self.host=nodeAddress[0]
-        
+        # Recebe a resposta do servidor 
+        self.host=self.socketTCP.recv(1024)
+
         # Criação do socket UDP
         self.socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # Associa o socket ao endereço e à porta

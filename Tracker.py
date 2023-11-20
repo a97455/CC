@@ -52,15 +52,15 @@ class Tracker:
                 # message vai ser um dicionário
                 message = json.loads(data.decode())
 
-                if header[0] == "000": # starConnection
+                if header[0] == "000": # startConnection
                     if client_address not in self.dict_address_nodeName:
                         node_name = "Node" + str(Tracker.node_count)
                         Tracker.node_count += 1
                         
                         self.dict_address_nodeName[client_address] = node_name
 
-                        # Envia uma resposta de volta para o cliente
-                        response = client_address
+                        # Envia uma resposta de volta para o cliente (nodeHost)
+                        response = client_address[0]
                         client_socket.send(response.encode())
 
                 elif header[0] == "001": # sendDictsFiles
