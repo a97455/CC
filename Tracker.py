@@ -89,9 +89,10 @@ class Tracker:
 
                 elif header[0] == "010": # getFile
                     if message['filename'] not in self.dict_filename_numBlocks:
-                        print("Nenhum nó do servidor tem o ficheiro inteiro")
+                        error="Nenhum nó tem o ficheiro inteiro"
+                        tpm.noFileComplete(client_socket,error)
                     else:
-                        tpm.sendDictBlockListNodes(client_socket,self.dict_filename_dictBlockListNodes[filename],self.dict_filename_numBlocks[filename])
+                        tpm.sendDictBlockListNodes(client_socket,self.dict_filename_dictBlockListNodes[message['filename']],self.dict_filename_numBlocks[filename])
                 
                 elif header[0] == '100': # endConnection
                     if client_address in self.dict_address_nodeName:

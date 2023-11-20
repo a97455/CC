@@ -85,8 +85,9 @@ class Node:
 
                         # reenvia os seus dicionarios para o Tracker (já com o novo ficheiro transferido)
                         self.sendDictsFiles()
-                        break
-
+                    elif header[0] == "101":
+                        print(message['error'])
+                    break
                 except Exception:
                     continue
         else:

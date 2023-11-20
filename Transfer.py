@@ -7,19 +7,18 @@ class Transfer:
 
         while True:
             # Recebe dados do cliente (header tem 18 bytes)
-            header, client_socket = socketUDP.recvfrom(18)         
+            header = socketUDP.recvfrom(18)         
             # Cria uma nova thread para cada pedido de bloco recebido
             transfer_thread = threading.Thread(target=self.Transfers, args=(socketUDP,folder_path,
                                                                             dict_files_inBlocks,
-                                                                            dict_files_complete,header,
-                                                                            client_socket))
+                                                                            dict_files_complete,header))
             transfer_thread.daemon=True # termina as threads mal o precesso principal morra
             transfer_thread.start()
 
-    def Transfers(self,socketUDP,folder_path,dict_files_inBlocks,dict_files_complete,header,client_socket):
+    def Transfers(self,socketUDP,folder_path,dict_files_inBlocks,dict_files_complete,header):
         while True:
             data_length = int(header[1], 16)
-            data = client_socket.recv(data_length)
+            data = socketUDP.recv(data_length)
             
             if not data:
                 break

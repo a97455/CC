@@ -5,6 +5,7 @@ SEND_DICTS_FILES = "001"
 GET_FILE = "010"
 SEND_DICT_BLOCK_LISTNODES = "011" 
 END_CONNECTION = "100"
+NO_FILE_COMPLETE = "101"
 
 #___________________________Node_Send________________________________________
 
@@ -76,5 +77,19 @@ def sendDictBlockListNodes(client_socket,dict_BlockList_Nodes,numBlocks):
 
     # header ocupa 20 bytes
     header = SEND_DICT_BLOCK_LISTNODES +"|"+ messageSize_str
+    final = header + message_json
+    client_socket.send(final.encode())
+
+def noFileComplete(client_socket,error):
+    # Envia dados para o no
+    message = {'error': error}
+    message_json = json.dumps(message)
+    messageSize_in_bytes = len(message_json).to_bytes(8,'big')
+
+    # messageSize_str ocupa 16 bytes
+    messageSize_str = messageSize_in_bytes.hex().zfill(16) # Convert bytes to hexadecimal string
+
+    # header ocupa 20 bytes
+    header = NO_FILE_COMPLETE +"|"+ messageSize_str
     final = header + message_json
     client_socket.send(final.encode())
