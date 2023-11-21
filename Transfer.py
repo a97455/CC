@@ -4,10 +4,11 @@ import os
 
 class Transfer:
     def __init__(self,host,socketUDP,folder_path,dict_files_inBlocks,dict_files_complete):
-
         while True:
             # Recebe dados do cliente (header tem 18 bytes)
-            header= socketUDP.recvfrom(18)       
+            data= socketUDP.recvfrom(18)
+            header=data[0].decode().split('|')
+
             # Cria uma nova thread para cada pedido de bloco recebido
             transfer_thread = threading.Thread(target=self.Transfers, args=(socketUDP,folder_path,
                                                                             dict_files_inBlocks,
@@ -18,7 +19,9 @@ class Transfer:
     def Transfers(self,socketUDP,folder_path,dict_files_inBlocks,dict_files_complete,header):
         while True:
             data_length = int(header[1], 16)
-            data = socketUDP.recv(data_length)
+            print(data_length)
+            data = socketUDP.recvfrom(data_length) #problema esta aqui agora
+            print(data)
             
             if not data:
                 break

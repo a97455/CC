@@ -79,7 +79,6 @@ class Node:
                                 break
                             if block not in self.dict_files_inBlocks:
                                 node_selected = random.choice(listNodes)
-                                print(node_selected)
                                 trspm.getBlock(self.socketUDP,self.host,node_selected[0],block,filename)
 
                                 #espera pela resposta com o bloco pedido
