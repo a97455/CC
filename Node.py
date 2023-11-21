@@ -42,7 +42,7 @@ class Node:
         tpm.startConnection(self.socketTCP)
 
         # Recebe a resposta do servidor 
-        self.host=self.socketTCP.recv(1024)
+        self.host=self.socketTCP.recv(1024).decode()
 
         # Criação do socket UDP
         self.socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -71,12 +71,16 @@ class Node:
                     message = json.loads(data.decode())
 
                     if header[0] == "011":
-                        dict_BlockList_Nodes = message['dict_BlockList_Nodes']
+                        dict_Block_ListNodes = message['dict_Block_ListNodes']
 
-                        for block,listNodes in dict_BlockList_Nodes.items():
+                        for block,listNodes in dict_Block_ListNodes.items():
+                            if len(listNodes)==0:
+                                print("Nenhum no tem o ficheiro completo")
+                                break
                             if block not in self.dict_files_inBlocks:
                                 node_selected = random.choice(listNodes)
-                                trspm.getBlock(self.socketUDP,node_selected[0],block,filename)
+                                print(node_selected)
+                                trspm.getBlock(self.socketUDP,self.host,node_selected[0],block,filename)
 
                                 #espera pela resposta com o bloco pedido
                                 blockReceived = self.socketUDP.recvfrom(1024)

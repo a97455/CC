@@ -7,7 +7,7 @@ class Transfer:
 
         while True:
             # Recebe dados do cliente (header tem 18 bytes)
-            header = socketUDP.recvfrom(18)         
+            header= socketUDP.recvfrom(18)       
             # Cria uma nova thread para cada pedido de bloco recebido
             transfer_thread = threading.Thread(target=self.Transfers, args=(socketUDP,folder_path,
                                                                             dict_files_inBlocks,
@@ -30,11 +30,11 @@ class Transfer:
                 if message['filename'] in dict_files_complete:
                     file_path = os.path.join(folder_path, message['filename'])
                     blockRequested = getBlock_inFile(file_path,message['block'])
-                    socketUDP.sendto(blockRequested, (message['client_socketUDP'], 9090))
+                    socketUDP.sendto(blockRequested, (message['client_host'],9090))
                 elif message['filename'] in dict_files_inBlocks:
                     block_path = os.path.join(folder_path, message['block'])
                     blockRequested = file_to_binary(block_path)
-                    socketUDP.sendto(blockRequested, (message['client_socketUDP'], 9090))
+                    socketUDP.sendto(blockRequested, (message['client_host'],9090))
 
 
 def getBlock_inFile(input_file, block_requested):

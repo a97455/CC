@@ -66,9 +66,9 @@ def endConnection(client_socket):
 
 #___________________________Tracker_Send________________________________________
 
-def sendDictBlockListNodes(client_socket,dict_BlockList_Nodes,numBlocks):
+def sendDictBlockListNodes(client_socket,dict_Block_ListNodes,numBlocks):
     # Envia dados para o no
-    message = {'dict_BlockList_Nodes': dict_BlockList_Nodes,'numBlocks':numBlocks}
+    message = {'dict_Block_ListNodes': dict_Block_ListNodes,'numBlocks':numBlocks}
     message_json = json.dumps(message)
     messageSize_in_bytes = len(message_json).to_bytes(8,'big')
 
