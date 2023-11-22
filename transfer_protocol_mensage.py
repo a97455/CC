@@ -13,5 +13,5 @@ def getBlock(client_socketUDP,client_host,provider_host,block,filename):
 
     # header ocupa 18 bytes
     header = GET_BLOCK +"|"+ messageSize_str
-    final = header + message_json
-    client_socketUDP.sendto(final.encode(),(provider_host,9090)) #porta default para sockets udp no nosso protocolo
+    client_socketUDP.sendto(header.encode(),(provider_host,9090)) #envia o header
+    client_socketUDP.sendto(message_json.encode(),(provider_host,9090)) #envia a camada de dados

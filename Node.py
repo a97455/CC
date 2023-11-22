@@ -82,7 +82,7 @@ class Node:
                                 trspm.getBlock(self.socketUDP,self.host,node_selected[0],block,filename)
 
                                 #espera pela resposta com o bloco pedido
-                                blockReceived = self.socketUDP.recvfrom(1024)
+                                blockReceived,_ = self.socketUDP.recvfrom(1024)
                                 block_path=os.path.join(folder_path,f'{block}')
                                 binary_to_file(blockReceived,block_path)
 
