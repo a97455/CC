@@ -80,7 +80,7 @@ class Node:
                             
                         for block,listNodes in dict_Block_ListNodes.items():
                             if len(listNodes)==0:
-                                print("Nenhum no tem o ficheiro completo mesmo")
+                                print("Nenhum no tem o ficheiro completo")
                                 break
                             if block not in self.dict_files_inBlocks[filename]:
                                 node_selected = random.choice(listNodes)
