@@ -1,3 +1,3 @@
 # CC
 
-problema e, o pc1 envia o pedido para o pc2, o pc2 envia o bloco pedido para o socketudp do pc1, mas o mesmo esta a ler desse mesmo socket para ver pedidos de blocos de outros nodos. logo tem problema de concorrencia.
+Falta fazer checksum (verificar se o bloco chega intacto) e se um certo bloco nao chegar reenviar o pedido desse bloco apos certo tempo previamente estipulado

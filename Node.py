@@ -15,6 +15,9 @@ class Node:
         # Dicionario com os filenames (chave) e o numero de blocos que esse ficheiro tem (valor)
         self.dict_files_complete = {}
 
+        # caminho para a sua pasta de ficheiros locais
+        self.folder_path=folder_path
+
         # adiciona os ficheiro do folder_path ao dict_files
         for item in os.listdir(folder_path):
             item_path = os.path.join(folder_path, item)
@@ -35,9 +38,6 @@ class Node:
         # Conecta ao servidor
         self.socketTCP.connect((serverHost, serverPort))
 
-        #lock do socket udp
-        self.lock=threading.Lock()
-
 
     def startConnection(self):
         # Mensagens para o servidor
@@ -57,7 +57,7 @@ class Node:
         tpm.sendDictsFiles(self.socketTCP,self.dict_files_inBlocks,self.dict_files_complete)
 
 
-    def getFile(self,filename,folder_path):
+    def getFile(self,filename):        
         if filename not in self.dict_files_complete:
             # Mensagens para o servidor
             tpm.getFile(self.socketTCP,filename)
@@ -75,13 +75,17 @@ class Node:
                     if header[0] == "011":
                         dict_Block_ListNodes = message['dict_Block_ListNodes']
 
+                        if filename not in self.dict_files_inBlocks:
+                            self.dict_files_inBlocks[filename]= [] 
+                            
                         for block,listNodes in dict_Block_ListNodes.items():
                             if len(listNodes)==0:
-                                print("Nenhum no tem o ficheiro completo")
+                                print("Nenhum no tem o ficheiro completo mesmo")
                                 break
-                            if block not in self.dict_files_inBlocks:
+                            if block not in self.dict_files_inBlocks[filename]:
                                 node_selected = random.choice(listNodes)
-                                trspm.getBlock(self.socketUDP,self.host,node_selected[0],block,filename)
+                                trspm.getBlock(self.socketUDP,node_selected[0],self.host,block,filename)
+
                     elif header[0] == "101":
                         print(message['error'])
                     break
@@ -100,12 +104,7 @@ class Node:
         self.socketTCP.close()
     
     
-def binary_to_file(binary_data, output_file_path):
-    with open(output_file_path, 'wb') as file:
-        file.write(binary_data)
-
-
-def interactive_mode(node,folder_path):
+def interactive_mode(node):
     while True:
         print("\nChoose an option:")
         print("1. Get File")
@@ -115,7 +114,7 @@ def interactive_mode(node,folder_path):
 
         if choice == "1":
             filename = input("Enter the filename: ")
-            node.getFile(filename,folder_path)
+            node.getFile(filename)
         elif choice == "2":
             node.endConnection()
             break
@@ -138,12 +137,13 @@ if __name__ == '__main__':
 
     try:
         # Cria uma nova thread para cada esperar receber pedidos de blocos no seu socketUDP
-        transfer_thread = threading.Thread(target=trs.Transfer, args=(node,folder_path))
+        transfer_thread = threading.Thread(target=trs.Transfer, args=(node.folder_path,node.socketTCP,node.socketUDP,
+                                                                      node.dict_files_complete,node.dict_files_inBlocks))
         transfer_thread.daemon=True # termina as threads mal o precesso principal morra
         transfer_thread.start()
 
         # Thread principal vai lidar com os pedidos de ficheiros no node
-        interactive_mode(node,folder_path)
+        interactive_mode(node)
         
     except KeyboardInterrupt:
         node.endConnection()
