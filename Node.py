@@ -14,7 +14,7 @@ class Node:
         self.dict_files_inBlocks = {}
         # Dicionario com os filenames (chave) e o numero de blocos que esse ficheiro tem (valor)
         self.dict_files_complete = {}
-        
+
         # adiciona os ficheiro do folder_path ao dict_files
         for item in os.listdir(folder_path):
             item_path = os.path.join(folder_path, item)
@@ -29,12 +29,14 @@ class Node:
                     block_path = os.path.join(item_path, block)
                     if os.path.isfile(block_path):
                         self.dict_files_inBlocks[item].append(block)
-
         
         # Criação do socket TCP
         self.socketTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # Conecta ao servidor
         self.socketTCP.connect((serverHost, serverPort))
+
+        #lock do socket udp
+        self.lock=threading.Lock()
 
 
     def startConnection(self):
@@ -80,14 +82,6 @@ class Node:
                             if block not in self.dict_files_inBlocks:
                                 node_selected = random.choice(listNodes)
                                 trspm.getBlock(self.socketUDP,self.host,node_selected[0],block,filename)
-
-                                #espera pela resposta com o bloco pedido
-                                blockReceived,_ = self.socketUDP.recvfrom(1024)
-                                block_path=os.path.join(folder_path,f'{block}')
-                                binary_to_file(blockReceived,block_path)
-
-                        # reenvia os seus dicionarios para o Tracker (já com o novo ficheiro transferido)
-                        self.sendDictsFiles()
                     elif header[0] == "101":
                         print(message['error'])
                     break
@@ -104,7 +98,7 @@ class Node:
 
         # Fecha a conexão com o servidor
         self.socketTCP.close()
-
+    
     
 def binary_to_file(binary_data, output_file_path):
     with open(output_file_path, 'wb') as file:
@@ -144,9 +138,7 @@ if __name__ == '__main__':
 
     try:
         # Cria uma nova thread para cada esperar receber pedidos de blocos no seu socketUDP
-        transfer_thread = threading.Thread(target=trs.Transfer, args=(node.host,node.socketUDP,folder_path,
-                                                                      node.dict_files_inBlocks,
-                                                                      node.dict_files_complete))
+        transfer_thread = threading.Thread(target=trs.Transfer, args=(node,folder_path))
         transfer_thread.daemon=True # termina as threads mal o precesso principal morra
         transfer_thread.start()
 
