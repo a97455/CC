@@ -8,7 +8,7 @@ import Transfer as trs
 import track_protocol_mensage as tpm
 import transfer_protocol_mensage as trspm
 
-class Node:
+class Node:   
     def __init__(self,folder_path,serverHost,serverPort):
         # Dicionario com os filenames (chave) e uma lista dos blocos que tem desse ficheiro (valor)
         self.dict_files_inBlocks = {}
@@ -83,8 +83,11 @@ class Node:
                                 print("Nenhum no tem o ficheiro completo")
                                 break
                             if block not in self.dict_files_inBlocks[filename]:
-                                node_selected = random.choice(listNodes)
-                                trspm.getBlock(self.socketUDP,node_selected[0],self.host,block,filename)
+                                getBlock_lock = threading.Lock()
+                                # Cria uma nova thread para enviar cada pedido de bloco
+                                transfer_thread = threading.Thread(target=self.getBlock, args=(listNodes,block,filename,getBlock_lock))
+                                transfer_thread.daemon=True # termina as threads mal o processo principal morra
+                                transfer_thread.start()
 
                     elif header[0] == "101":
                         print(message['error'])
@@ -94,15 +97,22 @@ class Node:
         else:
             print("Já possui o ficheiro completo")
 
+
+    def getBlock(self,listNodes,block,filename,lock):
+        node_selected = random.choice(listNodes)
+        trspm.getBlock(self.socketUDP,node_selected[0],self.host,block,filename,lock)
+
+
     def endConnection(self):
         # Mensagens para o servidor
         tpm.endConnection(self.socketTCP)
 
+        # Fecha os seus sockets
+        self.socketTCP.close()
+        self.socketUDP.close()
+
         print("\nConexão Terminada.")
 
-        # Fecha a conexão com o servidor
-        self.socketTCP.close()
-    
     
 def interactive_mode(node):
     while True:
@@ -139,7 +149,7 @@ if __name__ == '__main__':
         # Cria uma nova thread para cada esperar receber pedidos de blocos no seu socketUDP
         transfer_thread = threading.Thread(target=trs.Transfer, args=(node.folder_path,node.socketTCP,node.socketUDP,
                                                                       node.dict_files_complete,node.dict_files_inBlocks))
-        transfer_thread.daemon=True # termina as threads mal o precesso principal morra
+        transfer_thread.daemon=True # termina as threads mal o processo principal morra
         transfer_thread.start()
 
         # Thread principal vai lidar com os pedidos de ficheiros no node

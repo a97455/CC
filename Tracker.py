@@ -16,16 +16,16 @@ class Tracker:
 
         try:
             # Cria o socket TCP
-            self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.tracker_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             # Liga o socket ao endereço e porta especificados
-            self.server_socket.bind((host, port))
+            self.tracker_socket.bind((host, port))
             # Escuta por conexões
-            self.server_socket.listen(5)
+            self.tracker_socket.listen(5)
             print(f"Servidor aguardando conexões em {host}:{port}...")
 
             while True:
                 # Aceita uma conexão
-                client_socket, client_adress = self.server_socket.accept()
+                client_socket, client_adress = self.tracker_socket.accept()
                 print(f"Conexão de {client_adress[0]}:{client_adress[1]} estabelecida.")
 
                 # Cria uma nova thread para cada nova conexão estabelecida
@@ -81,11 +81,12 @@ class Tracker:
                             self.dict_filename_dictBlockListNodes[filename] = {}
 
                         for block in range(1,numBlocks+1):
-                            if block in self.dict_filename_dictBlockListNodes[filename]:
-                                if client_address not in self.dict_filename_dictBlockListNodes[filename][block]:
-                                    self.dict_filename_dictBlockListNodes[filename][block].append(client_address)
+                            blockString=str(block)
+                            if blockString in self.dict_filename_dictBlockListNodes[filename]: #chave é a string do numBloco
+                                if client_address not in self.dict_filename_dictBlockListNodes[filename][blockString]:
+                                    self.dict_filename_dictBlockListNodes[filename][blockString].append(client_address)
                             else:
-                                self.dict_filename_dictBlockListNodes[filename][block] = [client_address]
+                                self.dict_filename_dictBlockListNodes[filename][blockString] = [client_address]
 
                 elif header[0] == "010": # getFile
                     if message['filename'] not in self.dict_filename_numBlocks:
@@ -107,10 +108,11 @@ class Tracker:
         client_socket.close()
 
     def stopTracker(self):
+        # Fecha o socket do servidor
+        self.tracker_socket.close()
+
         print("\nTracker terminado.")
 
-        # Fecha o socket do servidor
-        self.server_socket.close()
 
 
 if __name__ == '__main__':
