@@ -63,9 +63,8 @@ class Transfer:
         else: 
             self.dict_files_inBlocks[filename]=[block]
 
-
         # reenvia os seus dicionarios para o Tracker (já com o novo ficheiro transferido)
-        tpm.sendDictsFiles(self.socketTCP,self.dict_files_inBlocks,self.dict_files_complete)
+        tpm.newBlockLocaly(self.socketTCP,block,filename)
 
 
 def getBlock_inFile(input_file, block_requested): 

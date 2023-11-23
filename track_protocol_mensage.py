@@ -6,6 +6,7 @@ GET_FILE = "010"
 SEND_DICT_BLOCK_LISTNODES = "011" 
 END_CONNECTION = "100"
 NO_FILE_COMPLETE = "101"
+NEW_BLOCK_LOCALY = "110"
 
 #___________________________Node_Send________________________________________
 
@@ -47,6 +48,20 @@ def getFile(client_socket,filename):
 
     # header ocupa 20 bytes
     header = GET_FILE +"|"+ messageSize_str
+    final = header + message_json
+    client_socket.send(final.encode())
+
+def newBlockLocaly(client_socket,block,filename):
+    # Envia dados para o servidor
+    message = {'block':block,'filename':filename}
+    message_json = json.dumps(message)
+    messageSize_in_bytes = len(message_json).to_bytes(8,'big')
+
+    # messageSize_str ocupa 16 bytes
+    messageSize_str = messageSize_in_bytes.hex().zfill(16) # Convert bytes to hexadecimal string
+
+    # header ocupa 20 bytes
+    header = NEW_BLOCK_LOCALY +"|"+ messageSize_str
     final = header + message_json
     client_socket.send(final.encode())
 

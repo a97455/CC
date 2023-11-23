@@ -95,6 +95,9 @@ class Tracker:
                     else:
                         tpm.sendDictBlockListNodes(client_socket,self.dict_filename_dictBlockListNodes[message['filename']],self.dict_filename_numBlocks[filename])
                 
+                elif header[0] == "110": #newBlockLocaly
+                    self.dict_filename_dictBlockListNodes[message['filename']][message['block']].append(client_address)
+
                 elif header[0] == '100': # endConnection
                     if client_address in self.dict_address_nodeName:
                         self.dict_address_nodeName.pop(client_address)
