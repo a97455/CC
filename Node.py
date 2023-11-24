@@ -8,12 +8,16 @@ import Transfer as trs
 import track_protocol_mensage as tpm
 import transfer_protocol_mensage as trspm
 
-class Node:   
+class Node:  
+    classLock=threading.Lock()
+
     def __init__(self,folder_path,serverHost,serverPort):
         # Dicionario com os filenames (chave) e uma lista dos blocos que tem desse ficheiro (valor)
         self.dict_files_inBlocks = {}
         # Dicionario com os filenames (chave) e o numero de blocos que esse ficheiro tem (valor)
         self.dict_files_complete = {}
+
+        self.lock=threading.Lock()
 
         # caminho para a sua pasta de ficheiros locais
         self.folder_path=folder_path
@@ -83,9 +87,8 @@ class Node:
                                 print("Nenhum no tem o ficheiro completo")
                                 break
                             if block not in self.dict_files_inBlocks[filename]:
-                                getBlock_lock = threading.Lock()
                                 # Cria uma nova thread para enviar cada pedido de bloco
-                                transfer_thread = threading.Thread(target=self.getBlock, args=(listNodes,block,filename,getBlock_lock))
+                                transfer_thread = threading.Thread(target=self.getBlock, args=(listNodes,block,filename,Node.classLock))
                                 transfer_thread.daemon=True # termina as threads mal o processo principal morra
                                 transfer_thread.start()
 
@@ -148,7 +151,8 @@ if __name__ == '__main__':
     try:
         # Cria uma nova thread para cada esperar receber pedidos de blocos no seu socketUDP
         transfer_thread = threading.Thread(target=trs.Transfer, args=(node.folder_path,node.socketTCP,node.socketUDP,
-                                                                      node.dict_files_complete,node.dict_files_inBlocks))
+                                                                      node.dict_files_complete,node.dict_files_inBlocks,
+                                                                      Node.classLock,node.lock))
         transfer_thread.daemon=True # termina as threads mal o processo principal morra
         transfer_thread.start()
 

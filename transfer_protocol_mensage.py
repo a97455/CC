@@ -3,7 +3,7 @@ import json
 GET_BLOCK = "0"
 SEND_BLOCK = "1"
 
-def getBlock(client_socketUDP,provider_host,client_host,block,filename,lock):
+def getBlock(client_socketUDP,provider_host,client_host,block,filename,classLock):
     # Envia dados para o servidor
     message = {'client_host':client_host,'block':block,'filename':filename}
     message_json = json.dumps(message)
@@ -15,11 +15,11 @@ def getBlock(client_socketUDP,provider_host,client_host,block,filename,lock):
     # header ocupa 18 bytes
     header = GET_BLOCK +"|"+ messageSize_str
     
-    with lock:
+    with classLock:
         client_socketUDP.sendto(header.encode(),(provider_host,9090)) #envia o header
         client_socketUDP.sendto(message_json.encode(),(provider_host,9090)) #envia a camada de dados
 
-def sendBlock(provider_socketUDP,client_host,blocoBinario,blockSize,block,filename,lock):
+def sendBlock(provider_socketUDP,client_host,blocoBinario,blockSize,block,filename,classLock):
     # Envia dados para o servidor
     message = {'block':block,'blockSize':blockSize,'filename':filename}
     message_json = json.dumps(message)
@@ -31,7 +31,7 @@ def sendBlock(provider_socketUDP,client_host,blocoBinario,blockSize,block,filena
     # header ocupa 18 bytes
     header = SEND_BLOCK +"|"+ messageSize_str
 
-    with lock:
+    with classLock:
         provider_socketUDP.sendto(header.encode(),(client_host,9090)) #envia o header
         provider_socketUDP.sendto(message_json.encode(),(client_host,9090)) #envia a camada de dados
         provider_socketUDP.sendto(blocoBinario,(client_host,9090)) #envia o bloco em binario

@@ -5,7 +5,7 @@ import track_protocol_mensage as tpm
 import transfer_protocol_mensage as trspm
 
 class Transfer:
-    def __init__(self,folder_path,socketTCP,socketUDP,dict_files_complete,dict_files_inBlocks):
+    def __init__(self,folder_path,socketTCP,socketUDP,dict_files_complete,dict_files_inBlocks,classLock,lock):
         self.folder_path=folder_path
         self.socketTCP=socketTCP
         self.socketUDP=socketUDP
@@ -13,43 +13,43 @@ class Transfer:
         self.dict_files_inBlocks=dict_files_inBlocks
 
         while True:
-            # Recebe dados do cliente (header tem 18 bytes)
-            data,_= self.socketUDP.recvfrom(18) #nao precisamos de bloquear, pois so uma thread esta à escuta de pedidos de blocos ou de blocos
-            header=data.decode().split('|')
+            while lock:
+                # Recebe dados do cliente (header tem 18 bytes)
+                data,_= self.socketUDP.recvfrom(18) 
+                header=data.decode().split('|')
 
-            data_length = int(header[1], 16)
-            data_message,_= self.socketUDP.recvfrom(data_length)
+                data_length = int(header[1], 16)
+                data_message,_= self.socketUDP.recvfrom(data_length)
 
-            # message vai ser um dicionário
-            message = json.loads(data_message.decode())
+                # message vai ser um dicionário
+                message = json.loads(data_message.decode())
 
-            if header[0]== '0':
-                sendBlock_lock = threading.Lock()
-                # Cria uma nova thread para cada pedido de bloco recebido, enviando esse mesmo bloco
-                transfer_thread = threading.Thread(target=self.sendBlock, args=(message['filename'],message['block'],
-                                                                                message['client_host'],sendBlock_lock))
-                transfer_thread.daemon=True # termina as threads mal o precesso principal morra
-                transfer_thread.start()
+                if header[0]== '0':
+                    # Cria uma nova thread para cada pedido de bloco recebido, enviando esse mesmo bloco
+                    transfer_thread = threading.Thread(target=self.sendBlock, args=(message['filename'],message['block'],
+                                                                                    message['client_host'],classLock))
+                    transfer_thread.daemon=True # termina as threads mal o precesso principal morra
+                    transfer_thread.start()
 
-            elif header[0]== '1':        
-                blockReceived,_ = self.socketUDP.recvfrom(message['blockSize'])
-                # Cria uma nova thread para cada bloco recebido
-                transfer_thread = threading.Thread(target=self.saveBlock, args=(message['block'],message['filename'],
-                                                                                blockReceived))
-                transfer_thread.daemon=True # termina as threads mal o precesso principal morra
-                transfer_thread.start()
+                elif header[0]== '1':        
+                    blockReceived,_ = self.socketUDP.recvfrom(message['blockSize'])
+                    # Cria uma nova thread para cada bloco recebido
+                    transfer_thread = threading.Thread(target=self.saveBlock, args=(message['block'],message['filename'],
+                                                                                    blockReceived))
+                    transfer_thread.daemon=True # termina as threads mal o precesso principal morra
+                    transfer_thread.start()
 
 
-    def sendBlock(self,filename,block,client_host,lock):
+    def sendBlock(self,filename,block,client_host,classLock):
         if filename in self.dict_files_inBlocks:
             fileFolder_path = os.path.join(self.folder_path, filename)
             block_path = os.path.join(fileFolder_path, block) #bloco esta numa pasta com o nome do ficheiro
             blockRequested = file_to_binary(block_path)
-            trspm.sendBlock(self.socketUDP,client_host,blockRequested,len(blockRequested),block,filename,lock)
+            trspm.sendBlock(self.socketUDP,client_host,blockRequested,len(blockRequested),block,filename,classLock)
         elif filename in self.dict_files_complete:
             file_path = os.path.join(self.folder_path, filename)
             blockRequested = getBlock_inFile(file_path,block)
-            trspm.sendBlock(self.socketUDP,client_host,blockRequested,len(blockRequested),block,filename,lock)
+            trspm.sendBlock(self.socketUDP,client_host,blockRequested,len(blockRequested),block,filename,classLock)
 
 
     def saveBlock(self,block,filename,blockReceived):
@@ -57,11 +57,7 @@ class Transfer:
         block_path=os.path.join(fileFolder_path,f'{block}') #bloco ficara guardado na pasta local do seu ficheiro
         binary_to_file(blockReceived,fileFolder_path,block_path)
 
-        #adiciona o bloco transferido ao seu dicionario local
-        if filename in self.dict_files_inBlocks:
-            self.dict_files_inBlocks[filename].append(block)
-        else: 
-            self.dict_files_inBlocks[filename]=[block]
+        self.dict_files_inBlocks[filename].append(block)
 
         # reenvia os seus dicionarios para o Tracker (já com o novo ficheiro transferido)
         tpm.newBlockLocaly(self.socketTCP,block,filename)
