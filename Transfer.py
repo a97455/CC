@@ -5,7 +5,7 @@ import track_protocol_mensage as tpm
 import transfer_protocol_mensage as trspm
 
 class Transfer:
-    def __init__(self,folder_path,socketTCP,socketUDP,dict_files_complete,dict_files_inBlocks,classLock,lock):
+    def __init__(self,folder_path,socketTCP,socketUDP,dict_files_complete,dict_files_inBlocks,classLock):
         self.folder_path=folder_path
         self.socketTCP=socketTCP
         self.socketUDP=socketUDP
@@ -13,13 +13,14 @@ class Transfer:
         self.dict_files_inBlocks=dict_files_inBlocks
 
         while True:
-            while lock:
-                # Recebe dados do cliente (header tem 18 bytes)
-                data,_= self.socketUDP.recvfrom(18) 
-                header=data.decode().split('|')
+            data, _ = socketUDP.recvfrom(2048) 
+            
+            data_header,buffer = divideData(data,18) #header size = 18 
+            header=data_header.decode().split('|')
 
+            while buffer:
                 data_length = int(header[1], 16)
-                data_message,_= self.socketUDP.recvfrom(data_length)
+                data_message, buffer = divideData(buffer,data_length)
 
                 # message vai ser um dicionário
                 message = json.loads(data_message.decode())
@@ -32,7 +33,7 @@ class Transfer:
                     transfer_thread.start()
 
                 elif header[0]== '1':        
-                    blockReceived,_ = self.socketUDP.recvfrom(message['blockSize'])
+                    blockReceived,buffer = divideData(buffer,message['blockSize'])
                     # Cria uma nova thread para cada bloco recebido
                     transfer_thread = threading.Thread(target=self.saveBlock, args=(message['block'],message['filename'],
                                                                                     blockReceived))
@@ -63,19 +64,29 @@ class Transfer:
         tpm.newBlockLocaly(self.socketTCP,block,filename)
 
 
+def divideData(data,n):
+    # Separate the first header
+    header = data[:n]
+
+    # Store the rest in a data structure (e.g., list)
+    rest_of_data= data[n:]
+
+    return header, rest_of_data
+
+
 def getBlock_inFile(input_file, block_requested): 
-        with open(input_file, 'rb') as f:
-            for _ in range(int(block_requested)):
-                block = f.read(128)  # Tamanho dos blocos (default)
-                if not block:
-                    break
-            return block
+    with open(input_file, 'rb') as f:
+        for _ in range(int(block_requested)):
+            block = f.read(128)  # Tamanho dos blocos (default)
+            if not block:
+                break
+        return block
         
         
 def file_to_binary(file_path):
-        with open(file_path, 'rb') as file:
-            binary_data = file.read()
-        return binary_data
+    with open(file_path, 'rb') as file:
+        binary_data = file.read()
+    return binary_data
 
 
 def binary_to_file(binary_data,fileFolder_path,block_path): #guarda o bloco na sua pasta local

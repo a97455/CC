@@ -14,10 +14,10 @@ def getBlock(client_socketUDP,provider_host,client_host,block,filename,classLock
 
     # header ocupa 18 bytes
     header = GET_BLOCK +"|"+ messageSize_str
+    final = header + message_json
     
     with classLock:
-        client_socketUDP.sendto(header.encode(),(provider_host,9090)) #envia o header
-        client_socketUDP.sendto(message_json.encode(),(provider_host,9090)) #envia a camada de dados
+        client_socketUDP.sendto(final.encode(),(provider_host,9090)) 
 
 def sendBlock(provider_socketUDP,client_host,blocoBinario,blockSize,block,filename,classLock):
     # Envia dados para o servidor
@@ -30,8 +30,7 @@ def sendBlock(provider_socketUDP,client_host,blocoBinario,blockSize,block,filena
 
     # header ocupa 18 bytes
     header = SEND_BLOCK +"|"+ messageSize_str
+    final = header.encode() + message_json.encode() + blocoBinario
 
     with classLock:
-        provider_socketUDP.sendto(header.encode(),(client_host,9090)) #envia o header
-        provider_socketUDP.sendto(message_json.encode(),(client_host,9090)) #envia a camada de dados
-        provider_socketUDP.sendto(blocoBinario,(client_host,9090)) #envia o bloco em binario
+        provider_socketUDP.sendto(final,(client_host,9090))

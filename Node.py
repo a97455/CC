@@ -1,4 +1,5 @@
 import socket
+import time
 import os
 import json
 import sys
@@ -16,8 +17,6 @@ class Node:
         self.dict_files_inBlocks = {}
         # Dicionario com os filenames (chave) e o numero de blocos que esse ficheiro tem (valor)
         self.dict_files_complete = {}
-
-        self.lock=threading.Lock()
 
         # caminho para a sua pasta de ficheiros locais
         self.folder_path=folder_path
@@ -101,9 +100,18 @@ class Node:
             print("Já possui o ficheiro completo")
 
 
-    def getBlock(self,listNodes,block,filename,lock):
+    def getBlock(self,listNodes,block,filename,classLock):
         node_selected = random.choice(listNodes)
-        trspm.getBlock(self.socketUDP,node_selected[0],self.host,block,filename,lock)
+        trspm.getBlock(self.socketUDP,node_selected[0],self.host,block,filename,classLock)
+
+        BlockLocaly= False
+        while not BlockLocaly:
+            time.sleep(5) #espera pela chegada dos blocos
+
+            if block in self.dict_files_inBlocks[filename]:
+                BlockLocaly=True
+            else:
+                trspm.getBlock(self.socketUDP,node_selected[0],self.host,block,filename,classLock) #volta a pedir o bloco que se perdeu na rede
 
 
     def endConnection(self):
@@ -152,7 +160,7 @@ if __name__ == '__main__':
         # Cria uma nova thread para cada esperar receber pedidos de blocos no seu socketUDP
         transfer_thread = threading.Thread(target=trs.Transfer, args=(node.folder_path,node.socketTCP,node.socketUDP,
                                                                       node.dict_files_complete,node.dict_files_inBlocks,
-                                                                      Node.classLock,node.lock))
+                                                                      Node.classLock))
         transfer_thread.daemon=True # termina as threads mal o processo principal morra
         transfer_thread.start()
 
