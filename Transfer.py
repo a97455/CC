@@ -13,12 +13,11 @@ class Transfer:
         self.dict_files_inBlocks=dict_files_inBlocks
 
         while True:
-            data, _ = socketUDP.recvfrom(2048) 
-            
-            data_header,buffer = divideData(data,18) #header size = 18 
-            header=data_header.decode().split('|')
+            buffer, _ = socketUDP.recvfrom(2048) 
 
             while buffer:
+                data_header,buffer = divideData(buffer,18) #header size = 18 
+                header=data_header.decode().split('|')
                 data_length = int(header[1], 16)
                 data_message, buffer = divideData(buffer,data_length)
 
