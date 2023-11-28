@@ -1,4 +1,5 @@
 import threading
+import hashlib
 import json
 import os
 import track_protocol_mensage as tpm
@@ -33,18 +34,19 @@ class Transfer:
 
                 elif header[0]== '1':        
                     blockReceived,buffer = divideData(buffer,message['blockSize'])
-                    # Cria uma nova thread para cada bloco recebido
-                    transfer_thread = threading.Thread(target=self.saveBlock, args=(message['block'],message['filename'],
-                                                                                    blockReceived))
-                    transfer_thread.daemon=True # termina as threads mal o precesso principal morra
-                    transfer_thread.start()
+                    if message['checksum'] == calculate_checksum(blockReceived):
+                        # Cria uma nova thread para cada bloco recebido
+                        transfer_thread = threading.Thread(target=self.saveBlock, args=(message['block'],message['filename'],
+                                                                                        blockReceived))
+                        transfer_thread.daemon=True # termina as threads mal o precesso principal morra
+                        transfer_thread.start()
 
 
     def sendBlock(self,filename,block,client_host,classLock):
         if filename in self.dict_files_inBlocks:
             fileFolder_path = os.path.join(self.folder_path, filename)
             block_path = os.path.join(fileFolder_path, block) #bloco esta numa pasta com o nome do ficheiro
-            blockRequested = file_to_binary(block_path)
+            blockRequested = file_to_binary(block_path) 
             trspm.sendBlock(self.socketUDP,client_host,blockRequested,len(blockRequested),block,filename,classLock)
         elif filename in self.dict_files_complete:
             file_path = os.path.join(self.folder_path, filename)
@@ -63,11 +65,8 @@ class Transfer:
         tpm.newBlockLocaly(self.socketTCP,block,filename)
 
 
-def divideData(data,n):
-    # Separate the first header
+def divideData(data,n): #retrives the first n bytes from the buffer
     header = data[:n]
-
-    # Store the rest in a data structure (e.g., list)
     rest_of_data= data[n:]
 
     return header, rest_of_data
@@ -82,16 +81,22 @@ def getBlock_inFile(input_file, block_requested):
         return block
         
         
-def file_to_binary(file_path):
+def file_to_binary(file_path): 
     with open(file_path, 'rb') as file:
         binary_data = file.read()
     return binary_data
 
 
-def binary_to_file(binary_data,fileFolder_path,block_path): #guarda o bloco na sua pasta local
+def binary_to_file(binary_data,fileFolder_path,block_path):
     # Ensure the directory exists
     os.makedirs(fileFolder_path, exist_ok=True)
 
     with open(block_path, 'wb') as file:
         # Write the binary data to the file
         file.write(binary_data)
+
+
+def calculate_checksum(data):
+    sha256 = hashlib.sha256()
+    sha256.update(data)
+    return sha256.hexdigest()
