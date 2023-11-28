@@ -7,10 +7,7 @@ def getBlock(client_socketUDP,provider_host,client_host,block,filename,classLock
     # Envia dados para o servidor
     message = {'client_host':client_host,'block':block,'filename':filename}
     message_json = json.dumps(message)
-    messageSize_in_bytes = len(message_json).to_bytes(8,'big')
-
-    # messageSize_str ocupa 16 bytes
-    messageSize_str = messageSize_in_bytes.hex().zfill(16) # Convert bytes to hexadecimal string
+    messageSize_str = len(message_json).to_bytes(8,'big').hex().zfill(16) # Convert to hexadecimal string (16 bytes)
 
     # header ocupa 18 bytes
     header = GET_BLOCK +"|"+ messageSize_str
@@ -23,10 +20,7 @@ def sendBlock(provider_socketUDP,client_host,blocoBinario,blockSize,block,filena
     # Envia dados para o servidor
     message = {'block':block,'blockSize':blockSize,'filename':filename}
     message_json = json.dumps(message)
-    messageSize_in_bytes = len(message_json).to_bytes(8,'big')
-
-    # messageSize_str ocupa 16 bytes
-    messageSize_str = messageSize_in_bytes.hex().zfill(16) # Convert bytes to hexadecimal string
+    messageSize_str = len(message_json).to_bytes(8,'big').hex().zfill(16) # Convert to hexadecimal string (16 bytes)
 
     # header ocupa 18 bytes
     header = SEND_BLOCK +"|"+ messageSize_str

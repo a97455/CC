@@ -64,38 +64,33 @@ class Node:
         if filename not in self.dict_files_complete:
             # Mensagens para o servidor
             tpm.getFile(self.socketTCP,filename)
+
+            header = self.socketTCP.recv(20).decode().split("|")
+
+            data_length = int(header[1], 16)
+            data = self.socketTCP.recv(data_length)
             
-            while True:
-                try:
-                    header = self.socketTCP.recv(20).decode().split("|")
+            # message vai ser um dicionário
+            message = json.loads(data.decode())
 
-                    data_length = int(header[1], 16)
-                    data = self.socketTCP.recv(data_length)
+            if header[0] == "011":
+                dict_Block_ListNodes = message['dict_Block_ListNodes']
+
+                if filename not in self.dict_files_inBlocks:
+                    self.dict_files_inBlocks[filename]= [] 
                     
-                    # message vai ser um dicionário
-                    message = json.loads(data.decode())
+                for block,listNodes in dict_Block_ListNodes.items():
+                    if len(listNodes)==0:
+                        print("Nenhum no tem o ficheiro completo")
+                        break
+                    if block not in self.dict_files_inBlocks[filename]:
+                        # Cria uma nova thread para enviar cada pedido de bloco
+                        transfer_thread = threading.Thread(target=self.getBlock, args=(listNodes,block,filename,Node.classLock))
+                        transfer_thread.daemon=True # termina as threads mal o processo principal morra
+                        transfer_thread.start()
 
-                    if header[0] == "011":
-                        dict_Block_ListNodes = message['dict_Block_ListNodes']
-
-                        if filename not in self.dict_files_inBlocks:
-                            self.dict_files_inBlocks[filename]= [] 
-                            
-                        for block,listNodes in dict_Block_ListNodes.items():
-                            if len(listNodes)==0:
-                                print("Nenhum no tem o ficheiro completo")
-                                break
-                            if block not in self.dict_files_inBlocks[filename]:
-                                # Cria uma nova thread para enviar cada pedido de bloco
-                                transfer_thread = threading.Thread(target=self.getBlock, args=(listNodes,block,filename,Node.classLock))
-                                transfer_thread.daemon=True # termina as threads mal o processo principal morra
-                                transfer_thread.start()
-
-                    elif header[0] == "101":
-                        print(message['error'])
-                    break
-                except Exception:
-                    continue
+            elif header[0] == "101":
+                print(message['error'])
         else:
             print("Já possui o ficheiro completo")
 
