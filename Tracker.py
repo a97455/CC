@@ -1,14 +1,14 @@
 import socket
 import json
 import threading
+import DNS as dns
 import track_protocol_mensage as tpm
 
 class Tracker:
     node_count=1
 
     def __init__(self,host,port): 
-        # Dicionario com os diversos endereços de nós (host,port) e o seu respetivo nome
-        self.dict_address_nodeName = {}
+        self.listNodes = []
         # Dicionario com os diversos ficheiros (filename) e o seu dicionario que relaciona os seus blocos (chave) com a lista de nodos onde eles existem (valor)
         self.dict_filename_dictBlockListNodes = {}
         # Dicionario com os diversos ficheiros (filename) e o seu respetivo numero de blocos
@@ -53,15 +53,13 @@ class Tracker:
                 message = json.loads(data.decode())
 
                 if header[0] == "000": # startConnection
-                    if client_address not in self.dict_address_nodeName:
-                        node_name = "Node" + str(Tracker.node_count)
-                        Tracker.node_count += 1
-                        
-                        self.dict_address_nodeName[client_address] = node_name
+                    if message['name'] not in self.listNodes:
+                        self.listNodes.append(message['name'])
 
-                        # Envia uma resposta de volta para o cliente (nodeHost)
-                        response = client_address[0]
-                        client_socket.send(response.encode())
+                    print(self.listNodes)
+                    # Envia uma resposta de volta para o cliente (nodeHost)
+                    response = client_address[0]
+                    client_socket.send(response.encode())
 
                 elif header[0] == "001": # sendDictsFiles
                     for filename,list_blocks in message['dict_files_inBlocks'].items():
@@ -99,12 +97,14 @@ class Tracker:
                     self.dict_filename_dictBlockListNodes[message['filename']][message['block']].append(client_address)
 
                 elif header[0] == '100': # endConnection
-                    if client_address in self.dict_address_nodeName:
-                        self.dict_address_nodeName.pop(client_address)
+                    if message['name'] in self.listNodes:
+                        self.listNodes.remove(message['name'])
+
                         for dictBlockListNodes in self.dict_filename_dictBlockListNodes.values():
                             for listNodes in dictBlockListNodes.values():
                                 if client_address in listNodes:
                                     listNodes.remove(client_address)
+
             except IndexError:
                 break
 
@@ -117,6 +117,6 @@ class Tracker:
         print("\nTracker terminado.")
 
 
-
 if __name__ == '__main__':
+    dns.start_named_server()
     Tracker('10.4.4.1',9090)

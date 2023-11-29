@@ -5,6 +5,7 @@ import json
 import sys
 import random
 import threading
+import DNS as dns
 import Transfer as trs
 import track_protocol_mensage as tpm
 import transfer_protocol_mensage as trspm
@@ -12,7 +13,7 @@ import transfer_protocol_mensage as trspm
 class Node:  
     classLock=threading.Lock()
 
-    def __init__(self,folder_path,serverHost,serverPort):
+    def __init__(self,folder_path,trackerHost,trackerPort):
         # Dicionario com os filenames (chave) e uma lista dos blocos que tem desse ficheiro (valor)
         self.dict_files_inBlocks = {}
         # Dicionario com os filenames (chave) e o numero de blocos que esse ficheiro tem (valor)
@@ -38,13 +39,15 @@ class Node:
         
         # Criação do socket TCP
         self.socketTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #Nome do Node
+        self.name=socket.gethostname()
         # Conecta ao servidor
-        self.socketTCP.connect((serverHost, serverPort))
+        self.socketTCP.connect((trackerHost, trackerPort))
 
 
     def startConnection(self):
         # Mensagens para o servidor
-        tpm.startConnection(self.socketTCP)
+        tpm.startConnection(self.socketTCP,self.name)
 
         # Recebe a resposta do servidor 
         self.host=self.socketTCP.recv(1024).decode()
@@ -111,7 +114,7 @@ class Node:
 
     def endConnection(self):
         # Mensagens para o servidor
-        tpm.endConnection(self.socketTCP)
+        tpm.endConnection(self.socketTCP,self.name)
 
         # Fecha os seus sockets
         self.socketTCP.close()
@@ -144,7 +147,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     folder_path = sys.argv[1]
-    trackerHost = sys.argv[2]
+    trackerHost = dns.get_host_by_name(sys.argv[2])
     trackerPort = int(sys.argv[3])
 
     node = Node(folder_path, trackerHost, trackerPort)

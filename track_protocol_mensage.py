@@ -10,9 +10,9 @@ NEW_BLOCK_LOCALY = "110"
 
 #___________________________Node_Send________________________________________
 
-def startConnection(client_socket):
+def startConnection(client_socket,name):
     # Envia dados para o servidor
-    message = {}
+    message = {'name':name}
     message_json = json.dumps(message)
     messageSize_str = len(message_json).to_bytes(8,'big').hex().zfill(16) # Convert to hexadecimal string (16 bytes)
 
@@ -57,9 +57,9 @@ def newBlockLocaly(client_socket,block,filename):
     client_socket.send(final.encode())
 
 
-def endConnection(client_socket):
+def endConnection(client_socket,name):
     # Envia dados para o servidor
-    message = {}
+    message = {'name':name}
     message_json = json.dumps(message)
     messageSize_str = len(message_json).to_bytes(8,'big').hex().zfill(16) # Convert to hexadecimal string (16 bytes)
 

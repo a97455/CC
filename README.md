@@ -1,3 +1,3 @@
 # CC
 
-Falta DNS.
+FAZER RELATORIO
