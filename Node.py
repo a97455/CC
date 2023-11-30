@@ -88,7 +88,7 @@ class Node:
                         break
                     if block not in self.dict_files_inBlocks[filename]:
                         # Cria uma nova thread para enviar cada pedido de bloco
-                        transfer_thread = threading.Thread(target=self.getBlock, args=(listNodes,block,filename,Node.classLock))
+                        transfer_thread = threading.Thread(target=self.getBlock, args=(listNodes,block,filename,message['numBlocks'],Node.classLock))
                         transfer_thread.daemon=True # termina as threads mal o processo principal morra
                         transfer_thread.start()
 
@@ -98,9 +98,9 @@ class Node:
             print("Já possui o ficheiro completo")
 
 
-    def getBlock(self,listNodes,block,filename,classLock):
+    def getBlock(self,listNodes,block,filename,numBlocks,classLock):
         node_selected = random.choice(listNodes)
-        trspm.getBlock(self.socketUDP,node_selected[0],self.host,block,filename,classLock)
+        trspm.getBlock(self.socketUDP,node_selected[0],self.host,block,filename,numBlocks,classLock)
 
         BlockLocaly= False
         while not BlockLocaly:
@@ -109,7 +109,7 @@ class Node:
             if block in self.dict_files_inBlocks[filename]:
                 BlockLocaly=True
             else:
-                trspm.getBlock(self.socketUDP,node_selected[0],self.host,block,filename,classLock) #volta a pedir o bloco que se perdeu na rede
+                trspm.getBlock(self.socketUDP,node_selected[0],self.host,block,filename,numBlocks,classLock) #volta a pedir o bloco que se perdeu na rede
 
 
     def endConnection(self):

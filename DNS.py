@@ -13,12 +13,20 @@ def get_host_by_name(name):
         print(e)
 
 
+import subprocess
+import time
+
 def start_named_server():
     try:
         # Check if the named process is running
         subprocess.check_output(["pidof", "named"])
     except subprocess.CalledProcessError:
         # If named is not running, start it
-        subprocess.run(["sudo", "/sbin/named", "-c", "/etc/bind/named.conf"])
+        with open("/dev/null", "w") as null_file:
+            subprocess.run(
+                ["sudo", "/sbin/named", "-c", "/etc/bind/named.conf"],
+                stdout=null_file,
+                stderr=null_file
+            )
         # Wait for a moment to let the server start (you might need to adjust this)
-        time(2)
+        time.sleep(2)

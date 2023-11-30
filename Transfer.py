@@ -27,7 +27,7 @@ class Transfer:
 
                 if header[0]== '0':
                     # Cria uma nova thread para cada pedido de bloco recebido, enviando esse mesmo bloco
-                    transfer_thread = threading.Thread(target=self.sendBlock, args=(message['filename'],message['block'],
+                    transfer_thread = threading.Thread(target=self.sendBlock, args=(message['filename'],message['block'],message['numBlocks'],
                                                                                     message['client_host'],classLock))
                     transfer_thread.daemon=True # termina as threads mal o precesso principal morra
                     transfer_thread.start()
@@ -36,30 +36,35 @@ class Transfer:
                     blockReceived,buffer = divideData(buffer,message['blockSize'])
                     if message['checksum'] == calculate_checksum(blockReceived):
                         # Cria uma nova thread para cada bloco recebido
-                        transfer_thread = threading.Thread(target=self.saveBlock, args=(message['block'],message['filename'],
+                        transfer_thread = threading.Thread(target=self.saveBlock, args=(message['block'],message['filename'],message['numBlocks'],
                                                                                         blockReceived))
                         transfer_thread.daemon=True # termina as threads mal o precesso principal morra
                         transfer_thread.start()
 
 
-    def sendBlock(self,filename,block,client_host,classLock):
+    def sendBlock(self,filename,block,numBlocks,client_host,classLock):
         if filename in self.dict_files_inBlocks:
             fileFolder_path = os.path.join(self.folder_path, filename)
             block_path = os.path.join(fileFolder_path, block) #bloco esta numa pasta com o nome do ficheiro
             blockRequested = file_to_binary(block_path) 
-            trspm.sendBlock(self.socketUDP,client_host,blockRequested,len(blockRequested),block,filename,classLock)
+            trspm.sendBlock(self.socketUDP,client_host,blockRequested,len(blockRequested),block,filename,numBlocks,classLock)
         elif filename in self.dict_files_complete:
             file_path = os.path.join(self.folder_path, filename)
             blockRequested = getBlock_inFile(file_path,block)
-            trspm.sendBlock(self.socketUDP,client_host,blockRequested,len(blockRequested),block,filename,classLock)
+            trspm.sendBlock(self.socketUDP,client_host,blockRequested,len(blockRequested),block,filename,numBlocks,classLock)
 
 
-    def saveBlock(self,block,filename,blockReceived):
-        fileFolder_path=os.path.join(self.folder_path,filename)
+    def saveBlock(self,block,filename,numBlocks,blockReceived):
+        fileFolder_path=os.path.join(self.folder_path,filename) #path to the folder containing all the blocks from that file
         block_path=os.path.join(fileFolder_path,f'{block}') #bloco ficara guardado na pasta local do seu ficheiro
         binary_to_file(blockReceived,fileFolder_path,block_path)
 
-        self.dict_files_inBlocks[filename].append(block)
+
+        if block not in self.dict_files_inBlocks[filename]:
+            self.dict_files_inBlocks[filename].append(block)
+
+        if len(self.dict_files_inBlocks[filename])==numBlocks:
+            create_combined_file(fileFolder_path)
 
         # reenvia os seus dicionarios para o Tracker (já com o novo ficheiro transferido)
         tpm.newBlockLocaly(self.socketTCP,block,filename)
@@ -94,6 +99,28 @@ def binary_to_file(binary_data,fileFolder_path,block_path):
     with open(block_path, 'wb') as file:
         # Write the binary data to the file
         file.write(binary_data)
+
+
+def create_combined_file(fileFolder_path):
+    # Get a list of all files in the fileFolder_path
+    files = [f for f in os.listdir(fileFolder_path) if os.path.isfile(os.path.join(fileFolder_path, f))]
+    
+    # Sort the files based on their names (assuming names are numbers)
+    files.sort(key=lambda x: int(x))
+
+    # Create a new file with the folder name
+    output_file_path = os.path.join(fileFolder_path, f"{os.path.basename(fileFolder_path)}")
+
+    # Open the new file in binary write mode to handle bytes
+    with open(output_file_path, 'wb') as output_file:
+        # Iterate through each file, read its content, and write to the output file
+        for file_name in files:
+            file_path = os.path.join(fileFolder_path, file_name)
+            with open(file_path, 'rb') as input_file:
+                # Read the content as bytes
+                content = input_file.read()
+                # Write the content to the output file
+                output_file.write(content)
 
 
 def calculate_checksum(data):

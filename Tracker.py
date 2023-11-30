@@ -56,7 +56,6 @@ class Tracker:
                     if message['name'] not in self.listNodes:
                         self.listNodes.append(message['name'])
 
-                    print(self.listNodes)
                     # Envia uma resposta de volta para o cliente (nodeHost)
                     response = client_address[0]
                     client_socket.send(response.encode())
@@ -91,7 +90,7 @@ class Tracker:
                         error="Nenhum nó tem o ficheiro inteiro"
                         tpm.noFileComplete(client_socket,error)
                     else:
-                        tpm.sendDictBlockListNodes(client_socket,self.dict_filename_dictBlockListNodes[message['filename']],self.dict_filename_numBlocks[filename])
+                        tpm.sendDictBlockListNodes(client_socket,self.dict_filename_dictBlockListNodes[message['filename']],self.dict_filename_numBlocks[message['filename']])
                 
                 elif header[0] == "110": #newBlockLocaly
                     self.dict_filename_dictBlockListNodes[message['filename']][message['block']].append(client_address)
