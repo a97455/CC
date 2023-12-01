@@ -23,19 +23,20 @@ class Node:
         self.folder_path=folder_path
 
         # adiciona os ficheiro do folder_path ao dict_files
-        for item in os.listdir(folder_path):
-            item_path = os.path.join(folder_path, item)
-            if os.path.isfile(item_path):
+        for file in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, file)
+            if os.path.isfile(file_path):
                 # Calculate the number of blocks of 128 bytes
-                file_size = os.path.getsize(item_path)
+                file_size = os.path.getsize(file_path)
                 num_blocks = (file_size + 127) // 128
-                self.dict_files_complete[item] = num_blocks
-            elif os.path.isdir(item_path):
-                self.dict_files_inBlocks[item] = []
-                for block in os.listdir(item_path):
-                    block_path = os.path.join(item_path, block)
+                self.dict_files_complete[file] = num_blocks
+            elif os.path.isdir(file_path):
+                self.dict_files_inBlocks[file] = []
+                blockFolder_path=os.path.join(file_path,"blocks") #path to the folder containing all the blocks from that file
+                for block in os.listdir(blockFolder_path):
+                    block_path = os.path.join(blockFolder_path, block)
                     if os.path.isfile(block_path):
-                        self.dict_files_inBlocks[item].append(block)
+                        self.dict_files_inBlocks[file].append(block)
         
         # Criação do socket TCP
         self.socketTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -45,7 +45,8 @@ class Transfer:
     def sendBlock(self,filename,block,numBlocks,client_host,classLock):
         if filename in self.dict_files_inBlocks:
             fileFolder_path = os.path.join(self.folder_path, filename)
-            block_path = os.path.join(fileFolder_path, block) #bloco esta numa pasta com o nome do ficheiro
+            blockFolder_path=os.path.join(fileFolder_path,"blocks") #path to the folder containing all the blocks from that file
+            block_path = os.path.join(blockFolder_path, block) 
             blockRequested = file_to_binary(block_path) 
             trspm.sendBlock(self.socketUDP,client_host,blockRequested,len(blockRequested),block,filename,numBlocks,classLock)
         elif filename in self.dict_files_complete:
@@ -55,16 +56,16 @@ class Transfer:
 
 
     def saveBlock(self,block,filename,numBlocks,blockReceived):
-        fileFolder_path=os.path.join(self.folder_path,filename) #path to the folder containing all the blocks from that file
-        block_path=os.path.join(fileFolder_path,f'{block}') #bloco ficara guardado na pasta local do seu ficheiro
-        binary_to_file(blockReceived,fileFolder_path,block_path)
-
+        fileFolder_path=os.path.join(self.folder_path,filename) 
+        blockFolder_path=os.path.join(fileFolder_path,"blocks") #path to the folder containing all the blocks from that file
+        block_path=os.path.join(blockFolder_path,f'{block}')
+        binary_to_file(blockReceived,fileFolder_path,blockFolder_path,block_path)
 
         if block not in self.dict_files_inBlocks[filename]:
             self.dict_files_inBlocks[filename].append(block)
 
         if len(self.dict_files_inBlocks[filename])==numBlocks:
-            create_combined_file(fileFolder_path)
+            create_combined_file(blockFolder_path,fileFolder_path)
 
         # reenvia os seus dicionarios para o Tracker (já com o novo ficheiro transferido)
         tpm.newBlockLocaly(self.socketTCP,block,filename)
@@ -92,21 +93,23 @@ def file_to_binary(file_path):
     return binary_data
 
 
-def binary_to_file(binary_data,fileFolder_path,block_path):
-    # Ensure the directory exists
+def binary_to_file(binary_data,fileFolder_path,blockFolder_path,block_path):
+    # Ensure the directories exists
     os.makedirs(fileFolder_path, exist_ok=True)
+    if os.path.exists(fileFolder_path): 
+        os.makedirs(blockFolder_path, exist_ok=True)
 
     with open(block_path, 'wb') as file:
         # Write the binary data to the file
         file.write(binary_data)
 
 
-def create_combined_file(fileFolder_path):
-    # Get a list of all files in the fileFolder_path
-    files = [f for f in os.listdir(fileFolder_path) if os.path.isfile(os.path.join(fileFolder_path, f))]
+def create_combined_file(blockFolder_path,fileFolder_path):
+    # Get a list of all files in the blockFolder_path
+    blocks = [block for block in os.listdir(blockFolder_path) if os.path.isfile(os.path.join(blockFolder_path, block))]
     
-    # Sort the files based on their names (assuming names are numbers)
-    files.sort(key=lambda x: int(x))
+    # Sort the blocks based on their names (assuming names are numbers)
+    blocks.sort(key=lambda x: int(x))
 
     # Create a new file with the folder name
     output_file_path = os.path.join(fileFolder_path, f"{os.path.basename(fileFolder_path)}")
@@ -114,9 +117,9 @@ def create_combined_file(fileFolder_path):
     # Open the new file in binary write mode to handle bytes
     with open(output_file_path, 'wb') as output_file:
         # Iterate through each file, read its content, and write to the output file
-        for file_name in files:
-            file_path = os.path.join(fileFolder_path, file_name)
-            with open(file_path, 'rb') as input_file:
+        for block in blocks:
+            block_path = os.path.join(blockFolder_path, block)
+            with open(block_path, 'rb') as input_file:
                 # Read the content as bytes
                 content = input_file.read()
                 # Write the content to the output file
