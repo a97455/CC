@@ -12,10 +12,6 @@ def get_host_by_name(name):
     except Exception as e:
         print(e)
 
-
-import subprocess
-import time
-
 def start_named_server():
     try:
         # Check if the named process is running

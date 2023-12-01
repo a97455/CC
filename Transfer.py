@@ -12,6 +12,7 @@ class Transfer:
         self.socketUDP=socketUDP
         self.dict_files_complete=dict_files_complete
         self.dict_files_inBlocks=dict_files_inBlocks
+        self.saveBlockLock = threading.Lock()
 
         while True:
             buffer, _ = socketUDP.recvfrom(2048) 
@@ -37,7 +38,7 @@ class Transfer:
                     if message['checksum'] == calculate_checksum(blockReceived):
                         # Cria uma nova thread para cada bloco recebido
                         transfer_thread = threading.Thread(target=self.saveBlock, args=(message['block'],message['filename'],message['numBlocks'],
-                                                                                        blockReceived))
+                                                                                        blockReceived,self.saveBlockLock))
                         transfer_thread.daemon=True # termina as threads mal o precesso principal morra
                         transfer_thread.start()
 
@@ -55,11 +56,11 @@ class Transfer:
             trspm.sendBlock(self.socketUDP,client_host,blockRequested,len(blockRequested),block,filename,numBlocks,classLock)
 
 
-    def saveBlock(self,block,filename,numBlocks,blockReceived):
+    def saveBlock(self,block,filename,numBlocks,blockReceived,lock):
         fileFolder_path=os.path.join(self.folder_path,filename) 
         blockFolder_path=os.path.join(fileFolder_path,"blocks") #path to the folder containing all the blocks from that file
         block_path=os.path.join(blockFolder_path,f'{block}')
-        binary_to_file(blockReceived,fileFolder_path,blockFolder_path,block_path)
+        binary_to_file(blockReceived,fileFolder_path,blockFolder_path,block_path,lock)
 
         if block not in self.dict_files_inBlocks[filename]:
             self.dict_files_inBlocks[filename].append(block)
@@ -93,10 +94,10 @@ def file_to_binary(file_path):
     return binary_data
 
 
-def binary_to_file(binary_data,fileFolder_path,blockFolder_path,block_path):
-    # Ensure the directories exists
-    os.makedirs(fileFolder_path, exist_ok=True)
-    if os.path.exists(fileFolder_path): 
+def binary_to_file(binary_data,fileFolder_path,blockFolder_path,block_path,lock):
+    with lock:
+        # Ensure the directories exists
+        os.makedirs(fileFolder_path, exist_ok=True)
         os.makedirs(blockFolder_path, exist_ok=True)
 
     with open(block_path, 'wb') as file:
